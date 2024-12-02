@@ -22,7 +22,6 @@ jobs:
     defaults:
       run:
        shell: bash
-       working-directory: ./scripts
     steps:
     - uses: actions/checkout@v3
       with:
