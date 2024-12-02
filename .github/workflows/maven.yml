@@ -19,7 +19,10 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+       shell: bash
+       working-directory: ./scripts
     steps:
     - uses: actions/checkout@v3
       with:
@@ -41,12 +44,14 @@ jobs:
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2          
+        restore-keys: ${{ runner.os }}-m2   
+    - name: Run external SCA
+      run: ./dependency-check.sh
     - name: Build and analyze
       env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=roberto-luzardo-sonarsource_demo-java-security_842f08f0-5c97-4ffe-af8b-8cdc25d4df63 -Dsonar.projectName='demo-java-security'
+      run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=roberto-luzardo-sonarsource_demo-java-security_e23e37fa-592e-455d-a903-54529e5a3fc5 -Dsonar.projectName='demo-java-security'
 
       #run: mvn -B package --file pom.xml
 
