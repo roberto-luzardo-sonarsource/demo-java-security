@@ -44,10 +44,22 @@ jobs:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2   
-    - name: Run external SCA
-      run: |
-        chmod +x dependency-check.sh
-        ./dependency-check.sh
+    - name: Depcheck
+      uses: dependency-check/Dependency-Check_Action@main
+      id: Depcheck
+      with:
+        project: 'demo-java-security'
+        path: '.'
+        format: 'HTML'
+        out: 'reports' # this is the default, no need to specify unless you wish to override it
+        args: >
+          --failOnCVSS 7
+          --enableRetired
+    - name: Upload Test results
+      uses: actions/upload-artifact@master
+      with:
+          name: Depcheck report
+          path: ${{github.workspace}}/reports
     - name: Build and analyze
       env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
