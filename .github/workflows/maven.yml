@@ -63,6 +63,7 @@ jobs:
       with:
           name: Depcheck report
           path: ${{github.workspace}}/reports
+          compression-level: 0
     - name: Build and analyze
       env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
