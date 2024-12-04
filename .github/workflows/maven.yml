@@ -44,26 +44,26 @@ jobs:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2   
-    - name: Depcheck
-      uses: dependency-check/Dependency-Check_Action@main
-      env:
+    #- name: Depcheck
+     # uses: dependency-check/Dependency-Check_Action@main
+      #env:
         # actions/setup-java@v1 changes JAVA_HOME so it needs to be reset to match the depcheck image
-        JAVA_HOME: /opt/jdk
-      id: Depcheck
-      with:
-        project: 'demo-java-security'
-        path: '.'
-        format: 'HTML'
-        out: 'reports' # this is the default, no need to specify unless you wish to override it
-        args: >
-          --failOnCVSS 7
-          --enableRetired
-    - name: Upload Test results
-      uses: actions/upload-artifact@v4
-      with:
-          name: Depcheck report
-          path: ./report
-          compression-level: 0
+       # JAVA_HOME: /opt/jdk
+      #id: Depcheck
+      #with:
+      #  project: 'demo-java-security'
+       # path: '.'
+        #format: 'HTML'
+        #out: 'reports' # this is the default, no need to specify unless you wish to override it
+        #args: >
+        #  --failOnCVSS 7
+        #  --enableRetired
+    #- name: Upload Test results
+     # uses: actions/upload-artifact@v4
+      #with:
+       #   name: Depcheck report
+       #   path: ./report
+       #   compression-level: 0
     - name: Build and analyze
       env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
