@@ -1,20 +1,26 @@
-package demo.security.util;
-   import java.io.BufferedReader;
-   import java.io.IOException;
-   import java.io.InputStreamReader;
+public User getUser(Connection con, String user) throws SQLException {
 
-   public class ReadStdin {
-       public static void main(String[] args) throws IOException {
-           BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+  Statement stmt1 = null;
+  Statement stmt2 = null;
+  PreparedStatement pstmt;
+  try {
+    stmt1 = con.createStatement();
+    ResultSet rs1 = stmt1.executeQuery("GETDATE()"); // No issue; hardcoded query
 
-           System.out.print("Enter a line of text: ");
-           String line = reader.readLine();
+    stmt2 = con.createStatement();
+    ResultSet rs2 = stmt2.executeQuery("select FNAME, LNAME, SSN " +
+                 "from USERS where UNAME=" + user);  // Sensitive
 
-           System.out.println("You entered: " + line);
-           String dbQuery = "SELECT * FROM users WHERE id = " + line + ", callback)";
-            System.out.println("Generated SQL Query: " + dbQuery);
+    pstmt = con.prepareStatement("select FNAME, LNAME, SSN " +
+                 "from USERS where UNAME=" + user);  // Sensitive
+    ResultSet rs3 = pstmt.executeQuery();
 
-           reader.close();
-           
-       }
-   }
+    //...
+}
+
+public User getUserHibernate(org.hibernate.Session session, String data) {
+
+  org.hibernate.Query query = session.createQuery(
+            "FROM students where fname = " + data);  // Sensitive
+  // ...
+}
