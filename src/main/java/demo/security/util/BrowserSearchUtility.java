@@ -10,6 +10,8 @@ public class BrowserSearchUtility {
     public static void main(String[] args) {
         String query = "sonarsource";
         searchWeb(query);
+        String id = System.getProperty("id", "defaultId");
+        String dbString = "SELECT * FROM users WHERE id =" + id + ", callback)";
     }
 
     public static void searchWeb(String query) {
