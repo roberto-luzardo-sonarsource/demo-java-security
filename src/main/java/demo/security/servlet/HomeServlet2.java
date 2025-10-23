@@ -19,7 +19,7 @@ public class HomeServlet2 extends HttpServlet {
                          HttpServletResponse response) throws ServletException, IOException {
         String rawName = request.getParameter("name");
         // Sanitize using OWASP encoder to prevent XSS
-        String safeName = WebUtils.sanitizeHtml(rawName != null ? rawName.trim() : "");
+        String safeName = org.owasp.encoder.Encode.forHtml(rawName != null ? rawName.trim() : "");
 
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
