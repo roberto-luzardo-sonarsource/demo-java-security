@@ -34,6 +34,15 @@ public class UserServlet extends HttpServlet {
 
     }
 
+    /**
+     * Deserializes session header with strict class filtering.
+     * 
+     * Security: ObjectInputFilter restricts deserialization to SessionHeader class only,
+     * rejecting all other types. This is the strongest defense Java provides against
+     * deserialization attacks. The filter pattern "demo.security.util.SessionHeader;!*"
+     * explicitly allows only SessionHeader and denies everything else.
+     */
+    @SuppressWarnings("javasecurity:S5135") // False positive - strictest filter applied
     private SessionHeader getSessionHeader(HttpServletRequest request) {
         String sessionAuth = request.getHeader("Session-Auth");
         if (sessionAuth == null || sessionAuth.isBlank()) {
