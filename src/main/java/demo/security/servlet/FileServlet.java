@@ -1,5 +1,6 @@
 package demo.security.servlet;
 
+import demo.security.util.FileOperationException;
 import demo.security.util.Utils;
 
 import javax.servlet.ServletException;
@@ -33,7 +34,7 @@ public class FileServlet extends HttpServlet {
         }
         try {
             Utils.deleteFile(data);
-        } catch (SecurityException se) {
+        } catch (FileOperationException se) {
             safeSendError(response, HttpServletResponse.SC_FORBIDDEN, se.getMessage());
             return;
         }

@@ -38,7 +38,7 @@ public class Utils {
         File target = new File(baseDir, fileName);
         ensureWithinBase(baseDir, target);
         if (target.isDirectory()) {
-            throw new SecurityException("Refusing to delete directory");
+            throw new FileOperationException("Refusing to delete directory");
         }
         if (!target.exists()) {
             throw new IOException("File does not exist: " + fileName);
@@ -53,12 +53,11 @@ public class Utils {
         }
         String trimmed = input.trim();
         if (!trimmed.startsWith("console.log(") || !trimmed.endsWith(")")) {
-            throw new SecurityException("Dynamic execution blocked");
+            throw new FileOperationException("Dynamic execution blocked");
         }
-        // Extract the argument content (best effort) and log instead of executing.
-        String inner = trimmed.substring("console.log(".length(), trimmed.length() - 1).trim();
-        // Use simple logging via java.util.logging to avoid System.out usage flagged by rules
-        java.util.logging.Logger.getLogger(Utils.class.getName()).info("[ScriptLog] " + inner);
+        // Log safely without including user-controlled data directly
+        java.util.logging.Logger.getLogger(Utils.class.getName())
+            .info(() -> "Script execution attempted (blocked for security)");
     }
 
     public static byte[] encrypt(byte[] key, byte[] ptxt) throws Exception {
@@ -84,14 +83,14 @@ public class Utils {
     // ---------------------------------------------------------------------
     private static void validateFilename(String fileName) {
         if (fileName == null || fileName.isBlank()) {
-            throw new SecurityException("Filename is blank");
+            throw new FileOperationException("Filename is blank");
         }
         // Reject path separators or null bytes explicitly
         if (fileName.contains("/") || fileName.contains("\\") || fileName.indexOf('\0') >= 0) {
-            throw new SecurityException("Illegal characters in filename");
+            throw new FileOperationException("Illegal characters in filename");
         }
         if (!SAFE_FILENAME.matcher(fileName).matches()) {
-            throw new SecurityException("Filename fails whitelist pattern");
+            throw new FileOperationException("Filename fails whitelist pattern");
         }
     }
 
@@ -99,7 +98,7 @@ public class Utils {
         String baseCanonical = baseDir.getCanonicalPath();
         String targetCanonical = target.getCanonicalPath();
         if (!targetCanonical.startsWith(baseCanonical + File.separator)) {
-            throw new SecurityException("Attempted path escape");
+            throw new FileOperationException("Attempted path escape");
         }
     }
 
@@ -108,7 +107,7 @@ public class Utils {
         try {
             validateFilename(fileName);
             return true;
-        } catch (SecurityException e) {
+        } catch (FileOperationException e) {
             return false;
         }
     }

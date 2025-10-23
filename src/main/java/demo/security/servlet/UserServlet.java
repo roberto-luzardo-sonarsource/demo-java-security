@@ -46,8 +46,9 @@ public class UserServlet extends HttpServlet {
                 ObjectInputFilter filter = ObjectInputFilter.Config.createFilter("demo.security.util.SessionHeader;!*" );
                 in.setObjectInputFilter(filter);
                 Object obj = in.readObject();
-                if (obj instanceof SessionHeader) {
-                    return (SessionHeader) obj;
+                // Use pattern matching (Java 17+)
+                if (obj instanceof SessionHeader sessionHeader) {
+                    return sessionHeader;
                 }
             }
         } catch (Exception ignored) {
