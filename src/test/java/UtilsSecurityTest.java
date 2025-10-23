@@ -1,33 +1,58 @@
+import demo.security.util.EncryptionException;
 import demo.security.util.Utils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.security.KeyPair;
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class UtilsSecurityTest {
+class UtilsSecurityTest {
 
     @Test
-    public void testGenerateKey_Uses2048() {
+    void testGenerateKey_Uses2048() {
         KeyPair kp = Utils.generateKey();
         assertNotNull(kp.getPublic());
-        assertTrue("Public key size appears too small", kp.getPublic().getEncoded().length > 200);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testEncryptRejectsBadKey() throws Exception {
-        byte[] badKey = new byte[5];
-        Utils.encrypt(badKey, "hello".getBytes());
+        assertTrue(kp.getPublic().getEncoded().length > 200, "Public key size appears too small");
     }
 
     @Test
-    public void testEncryptProducesCiphertext() throws Exception {
+    void testEncryptRejectsBadKey() {
+        byte[] badKey = new byte[5];
+        assertThrows(IllegalArgumentException.class, () -> {
+            Utils.encrypt(badKey, "hello".getBytes());
+        });
+    }
+
+    @Test
+    void testEncryptProducesCiphertext() throws EncryptionException {
         byte[] key = new byte[16];
         byte[] ct1 = Utils.encrypt(key, "hello".getBytes());
         byte[] ct2 = Utils.encrypt(key, "hello".getBytes());
         assertNotNull(ct1);
         assertNotNull(ct2);
-        assertFalse("Ciphertexts should differ due to random nonce", Arrays.equals(ct1, ct2));
+        assertFalse(Arrays.equals(ct1, ct2), "Ciphertexts should differ due to random nonce");
+    }
+
+    @Test
+    void testEncryptRejectsNullPlaintext() {
+        byte[] key = new byte[16];
+        assertThrows(IllegalArgumentException.class, () -> Utils.encrypt(key, null));
+    }
+
+    @Test
+    void testEncryptWith24ByteKey() throws EncryptionException {
+        byte[] key = new byte[24];
+        byte[] ciphertext = Utils.encrypt(key, "test".getBytes());
+        assertNotNull(ciphertext);
+        assertTrue(ciphertext.length > 0, "Ciphertext should be non-empty");
+    }
+
+    @Test
+    void testEncryptWith32ByteKey() throws EncryptionException {
+        byte[] key = new byte[32];
+        byte[] ciphertext = Utils.encrypt(key, "test".getBytes());
+        assertNotNull(ciphertext);
+        assertTrue(ciphertext.length > 0, "Ciphertext should be non-empty");
     }
 }
