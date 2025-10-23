@@ -51,7 +51,7 @@ public class UserServlet extends HttpServlet {
                 }
             }
         } catch (Exception ignored) {
-            // Invalid header or tampered data; treat as unauthenticated
+            // Invalid header or tampered data; treat as unauthenticated (logged at debug in real app)
         }
         return null;
     }

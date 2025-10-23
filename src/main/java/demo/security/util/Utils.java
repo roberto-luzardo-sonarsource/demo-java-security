@@ -30,14 +30,36 @@ public class Utils {
     }
 
     public static void deleteFile(String fileName) throws IOException {
-        File file = new File(fileName);
-        FileUtils.forceDelete(file);
+        // Prevent deletion of directories and restrict to canonical path inside temp/app-uploads
+        File baseDir = new File(System.getProperty("java.io.tmpdir"), "app-uploads");
+        File target = new File(baseDir, fileName);
+        String baseCanonical = baseDir.getCanonicalPath();
+        String targetCanonical = target.getCanonicalPath();
+        if (!targetCanonical.startsWith(baseCanonical + File.separator)) {
+            throw new SecurityException("Attempted path escape");
+        }
+        if (target.isDirectory()) {
+            throw new SecurityException("Refusing to delete directory");
+        }
+        if (!target.exists()) {
+            throw new IOException("File does not exist: " + fileName);
+        }
+        FileUtils.forceDelete(target);
     }
 
     public static void executeJs(String input) throws ScriptException {
+        // Reject null/empty input early
+        if (input == null || input.trim().isEmpty()) {
+            throw new IllegalArgumentException("Script input cannot be empty");
+        }
+        // Basic allow-list: only permit simple console.log statements for demo (very restrictive)
+        String trimmed = input.trim();
+        if (!trimmed.startsWith("console.log(") || !trimmed.endsWith(")")) {
+            throw new SecurityException("Dynamic execution blocked");
+        }
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine engine = manager.getEngineByName("JavaScript");
-        engine.eval(input);
+        engine.eval(trimmed);
     }
 
     public static byte[] encrypt(byte[] key, byte[] ptxt) throws Exception {

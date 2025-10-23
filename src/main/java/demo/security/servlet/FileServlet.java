@@ -15,33 +15,59 @@ public class FileServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String data = request.getParameter("data");
-        if (data == null || data.isBlank()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Filename required");
+        if (!isValidFilename(data)) {
+            safeSendError(response, HttpServletResponse.SC_BAD_REQUEST, "Filename required or invalid");
             return;
         }
-        // Very restrictive: only allow deletion inside a safe upload directory
-        if (data.contains("..") || data.startsWith("/") || data.startsWith("\\")) {
-            try { response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid path"); } catch (IOException ignored) {
-                // Intentionally ignored: best-effort to report error to client.
-            }
+    File baseDir = prepareBaseDir(response);
+        if (baseDir == null) return; // error already sent
+
+        File target = new File(baseDir, data);
+        if (!isWithinBaseDir(baseDir, target)) {
+            safeSendError(response, HttpServletResponse.SC_FORBIDDEN, "Path escape detected");
             return;
         }
-        // In a real app this base directory would be externalized
+        if (!target.exists()) {
+            safeSendError(response, HttpServletResponse.SC_NOT_FOUND, "File not found");
+            return;
+        }
+        try {
+            Utils.deleteFile(data);
+        } catch (SecurityException se) {
+            safeSendError(response, HttpServletResponse.SC_FORBIDDEN, se.getMessage());
+            return;
+        }
+        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+    }
+
+    private boolean isValidFilename(String data) {
+        return data != null && !data.isBlank() && !data.contains("..") && !data.startsWith("/") && !data.startsWith("\\");
+    }
+
+    private File prepareBaseDir(HttpServletResponse response) {
         File baseDir = new File(System.getProperty("java.io.tmpdir"), "app-uploads");
         if (!baseDir.exists() && !baseDir.mkdirs()) {
-            try { response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Could not prepare directory"); } catch (IOException ignored) {
-                // Intentionally ignored: cannot report, fall-through ends request.
-            }
-            return;
+            safeSendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Could not prepare directory");
+            return null;
         }
-        File target = new File(baseDir, data);
-        if (!target.exists()) {
-            try { response.sendError(HttpServletResponse.SC_NOT_FOUND, "File not found"); } catch (IOException ignored) {
-                // Intentionally ignored: response already committed or client disconnected.
-            }
-            return;
+        return baseDir;
+    }
+
+    private boolean isWithinBaseDir(File baseDir, File target) {
+        try {
+            String baseCanonical = baseDir.getCanonicalPath();
+            String targetCanonical = target.getCanonicalPath();
+            return targetCanonical.startsWith(baseCanonical + File.separator);
+        } catch (IOException e) {
+            return false;
         }
-        Utils.deleteFile(target.getAbsolutePath());
-        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+    }
+
+    private void safeSendError(HttpServletResponse response, int status, String message) {
+        try {
+            response.sendError(status, message);
+        } catch (IOException ignored) {
+            // Best effort; nothing else we can do
+        }
     }
 }

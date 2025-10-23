@@ -17,8 +17,18 @@ public class ScriptServlet extends HttpServlet {
         String data = request.getParameter("data");
         try {
             Utils.executeJs(data);
+        } catch (IllegalArgumentException | SecurityException e) {
+            safeSendError(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
         } catch (ScriptException e) {
-            throw new RuntimeException(e);
+            safeSendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Script execution error");
+        }
+    }
+
+    private void safeSendError(HttpServletResponse response, int status, String msg) {
+        try {
+            response.sendError(status, msg);
+        } catch (IOException ignored) {
+            // best effort
         }
     }
 }
