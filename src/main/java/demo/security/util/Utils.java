@@ -11,21 +11,21 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
 public class Utils {
 
     public static KeyPair generateKey() {
-        KeyPairGenerator keyPairGen;
         try {
-            keyPairGen = KeyPairGenerator.getInstance("RSA");
-            keyPairGen.initialize(512);
+            KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
+            // Use a modern key size
+            keyPairGen.initialize(2048);
             return keyPairGen.genKeyPair();
         } catch (NoSuchAlgorithmException e) {
-            return null;
+            throw new IllegalStateException("RSA algorithm not available", e);
         }
     }
 
@@ -40,13 +40,21 @@ public class Utils {
         engine.eval(input);
     }
 
-    public static void encrypt(byte[] key, byte[] ptxt) throws Exception {
-        byte[] nonce = "7cVgr5cbdCZV".getBytes("UTF-8");
+    public static byte[] encrypt(byte[] key, byte[] ptxt) throws Exception {
+        if (key == null || (key.length != 16 && key.length != 24 && key.length != 32)) {
+            throw new IllegalArgumentException("AES key must be 16, 24, or 32 bytes");
+        }
+        if (ptxt == null) {
+            throw new IllegalArgumentException("Plaintext must not be null");
+        }
+        // Generate a fresh 12 byte nonce for every encryption as recommended for GCM
+        byte[] nonce = new byte[12];
+        new SecureRandom().nextBytes(nonce);
 
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
         GCMParameterSpec gcmSpec = new GCMParameterSpec(128, nonce);
-
-        cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec); // Noncompliant
+        cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
+        return cipher.doFinal(ptxt);
     }
 }

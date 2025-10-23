@@ -9,6 +9,7 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputFilter;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.util.List;
@@ -35,14 +36,22 @@ public class UserServlet extends HttpServlet {
 
     private SessionHeader getSessionHeader(HttpServletRequest request) {
         String sessionAuth = request.getHeader("Session-Auth");
-        if (sessionAuth != null) {
-            try {
-                byte[] decoded = Base64.decodeBase64(sessionAuth);
-                ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(decoded));
-                return (SessionHeader) in.readObject();
-            } catch (Exception e) {
-                return null;
+        if (sessionAuth == null || sessionAuth.isBlank()) {
+            return null;
+        }
+        try {
+            byte[] decoded = Base64.decodeBase64(sessionAuth);
+            try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(decoded))) {
+                // Restrict deserialization to the expected class only
+                ObjectInputFilter filter = ObjectInputFilter.Config.createFilter("demo.security.util.SessionHeader;!*" );
+                in.setObjectInputFilter(filter);
+                Object obj = in.readObject();
+                if (obj instanceof SessionHeader) {
+                    return (SessionHeader) obj;
+                }
             }
+        } catch (Exception ignored) {
+            // Invalid header or tampered data; treat as unauthenticated
         }
         return null;
     }

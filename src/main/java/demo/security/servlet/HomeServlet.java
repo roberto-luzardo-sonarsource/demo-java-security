@@ -20,11 +20,18 @@ public class HomeServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request,
                          HttpServletResponse response) throws ServletException, IOException {
-        String name = request.getParameter("name").trim();
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        out.print("<h2>Hello "+name+ "</h2>");
-        out.close();
+        String name = request.getParameter("name");
+        if (name == null) {
+            name = "Guest";
+        } else {
+            name = name.trim();
+            // Basic neutralization of HTML to mitigate XSS for demo purposes
+            name = name.replace("<", "&lt;").replace(">", "&gt;");
+        }
+        response.setContentType("text/html;charset=UTF-8");
+        try (PrintWriter out = response.getWriter()) {
+            out.print("<h2>Hello " + name + "</h2>");
+        }
     }
 
     protected void doPost(HttpServletRequest request,

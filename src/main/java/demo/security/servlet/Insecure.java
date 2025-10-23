@@ -4,16 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.SQLException;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -21,30 +17,50 @@ public class Insecure {
 
   public void badFunction(HttpServletRequest request) throws IOException {
     String obj = request.getParameter("data");
+    if (obj == null) {
+      return; // nothing to process
+    }
     ObjectMapper mapper = new ObjectMapper();
-    mapper.enableDefaultTyping();
+    // Explicitly map to String without enabling default typing (removed dangerous polymorphic typing)
     String val = mapper.readValue(obj, String.class);
-    File tempDir;
-    tempDir = File.createTempFile("", ".");
-    tempDir.delete();
-    tempDir.mkdir();
-    Files.exists(Paths.get("/tmp/", obj));
+    // Use a dedicated temp directory; avoid TOCTOU pattern of delete+mkdir
+    File tempDir = new File(System.getProperty("java.io.tmpdir"), "app-temp");
+    if (!tempDir.exists()) {
+      tempDir.mkdirs();
+    }
+    Files.exists(Paths.get(tempDir.getAbsolutePath(), val));
   }
 
-  public String taintedSQL(HttpServletRequest request, Connection connection) throws Exception {
+  public String taintedSQL(HttpServletRequest request, Connection connection) throws SQLException {
     String user = request.getParameter("user");
-    String query = "SELECT userid FROM users WHERE username = '" + user  + "'";
-    Statement statement = connection.createStatement();
-    ResultSet resultSet = statement.executeQuery(query);
-    return resultSet.getString(0);
+    if (user == null) {
+      return null;
+    }
+    try (PreparedStatement ps = connection.prepareStatement("SELECT userid FROM users WHERE username = ?")) {
+      ps.setString(1, user);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return rs.getString(1);
+        }
+      }
+    }
+    return null;
   }
   
-  public String hotspotSQL(Connection connection, String user) throws Exception {
-	  Statement statement = null;
-	  statement = connection.createStatement();
-	  ResultSet rs = statement.executeQuery("select userid from users WHERE username=" + user);
-	  return rs.getString(0);
-	}
+  public String hotspotSQL(Connection connection, String user) throws SQLException {
+    if (user == null) {
+      return null;
+    }
+    try (PreparedStatement ps = connection.prepareStatement("SELECT userid FROM users WHERE username = ?")) {
+      ps.setString(1, user);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return rs.getString(1);
+        }
+      }
+    }
+    return null;
+  }
 
   // --------------------------------------------------------------------------
   // Custom sources, sanitizer and sinks example
