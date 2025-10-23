@@ -19,7 +19,7 @@ public class ScriptServlet extends HttpServlet {
             Utils.executeJs(data);
         } catch (IllegalArgumentException | SecurityException e) {
             safeSendError(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
-        } catch (ScriptException e) {
+        } catch (Exception e) {
             safeSendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Script execution error");
         }
     }
