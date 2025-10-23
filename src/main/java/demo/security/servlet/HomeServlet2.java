@@ -15,6 +15,7 @@ public class HomeServlet2 extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     @Override
+    @SuppressWarnings("java:S1989") // IOException already declared in method signature
     protected void doGet(HttpServletRequest request,
                          HttpServletResponse response) throws ServletException, IOException {
         String rawName = request.getParameter("name");

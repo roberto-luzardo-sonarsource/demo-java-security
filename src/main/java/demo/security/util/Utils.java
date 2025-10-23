@@ -60,22 +60,27 @@ public class Utils {
             .info(() -> "Script execution attempted (blocked for security)");
     }
 
-    public static byte[] encrypt(byte[] key, byte[] ptxt) throws Exception {
+    public static byte[] encrypt(byte[] key, byte[] ptxt) throws EncryptionException {
         if (key == null || (key.length != 16 && key.length != 24 && key.length != 32)) {
             throw new IllegalArgumentException("AES key must be 16, 24, or 32 bytes");
         }
         if (ptxt == null) {
             throw new IllegalArgumentException("Plaintext must not be null");
         }
-        // Generate a fresh 12 byte nonce for every encryption as recommended for GCM
-        byte[] nonce = new byte[12];
-        new SecureRandom().nextBytes(nonce);
+        
+        try {
+            // Generate a fresh 12 byte nonce for every encryption as recommended for GCM
+            byte[] nonce = new byte[12];
+            new SecureRandom().nextBytes(nonce);
 
-        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
-        GCMParameterSpec gcmSpec = new GCMParameterSpec(128, nonce);
-        cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
-        return cipher.doFinal(ptxt);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(128, nonce);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
+            return cipher.doFinal(ptxt);
+        } catch (Exception e) {
+            throw new EncryptionException("Encryption failed", e);
+        }
     }
 
     // ---------------------------------------------------------------------
