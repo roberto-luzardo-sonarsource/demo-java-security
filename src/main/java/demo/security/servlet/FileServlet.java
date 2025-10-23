@@ -15,7 +15,7 @@ public class FileServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String data = request.getParameter("data");
-        if (!isValidFilename(data)) {
+        if (!Utils.isSafeFilename(data)) {
             safeSendError(response, HttpServletResponse.SC_BAD_REQUEST, "Filename required or invalid");
             return;
         }
@@ -40,9 +40,7 @@ public class FileServlet extends HttpServlet {
         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     }
 
-    private boolean isValidFilename(String data) {
-        return data != null && !data.isBlank() && !data.contains("..") && !data.startsWith("/") && !data.startsWith("\\");
-    }
+    // Validation now centralized in Utils.isSafeFilename
 
     private File prepareBaseDir(HttpServletResponse response) {
         File baseDir = new File(System.getProperty("java.io.tmpdir"), "app-uploads");

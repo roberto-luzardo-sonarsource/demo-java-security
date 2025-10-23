@@ -6,17 +6,18 @@ import org.apache.commons.io.FileUtils;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.io.File;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.regex.Pattern;
 
 public class Utils {
+
+    // Restrictive filename pattern: letters, digits, dot, underscore, dash; 1-100 chars
+    private static final Pattern SAFE_FILENAME = Pattern.compile("^[A-Za-z0-9._-]{1,100}$");
 
     public static KeyPair generateKey() {
         try {
@@ -30,14 +31,13 @@ public class Utils {
     }
 
     public static void deleteFile(String fileName) throws IOException {
-        // Prevent deletion of directories and restrict to canonical path inside temp/app-uploads
+        validateFilename(fileName);
         File baseDir = new File(System.getProperty("java.io.tmpdir"), "app-uploads");
-        File target = new File(baseDir, fileName);
-        String baseCanonical = baseDir.getCanonicalPath();
-        String targetCanonical = target.getCanonicalPath();
-        if (!targetCanonical.startsWith(baseCanonical + File.separator)) {
-            throw new SecurityException("Attempted path escape");
+        if (!baseDir.exists() && !baseDir.mkdirs()) {
+            throw new IOException("Unable to create base directory");
         }
+        File target = new File(baseDir, fileName);
+        ensureWithinBase(baseDir, target);
         if (target.isDirectory()) {
             throw new SecurityException("Refusing to delete directory");
         }
@@ -47,19 +47,19 @@ public class Utils {
         FileUtils.forceDelete(target);
     }
 
-    public static void executeJs(String input) throws ScriptException {
-        // Reject null/empty input early
+    public static void executeJs(String input) {
+        // Further lockdown: no dynamic execution. Only accept console.log and treat as a log line.
         if (input == null || input.trim().isEmpty()) {
             throw new IllegalArgumentException("Script input cannot be empty");
         }
-        // Basic allow-list: only permit simple console.log statements for demo (very restrictive)
         String trimmed = input.trim();
         if (!trimmed.startsWith("console.log(") || !trimmed.endsWith(")")) {
             throw new SecurityException("Dynamic execution blocked");
         }
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("JavaScript");
-        engine.eval(trimmed);
+        // Extract the argument content (best effort) and log instead of executing.
+        String inner = trimmed.substring("console.log(".length(), trimmed.length() - 1).trim();
+        // Use simple logging via java.util.logging to avoid System.out usage flagged by rules
+        java.util.logging.Logger.getLogger(Utils.class.getName()).info("[ScriptLog] " + inner);
     }
 
     public static byte[] encrypt(byte[] key, byte[] ptxt) throws Exception {
@@ -78,5 +78,39 @@ public class Utils {
         GCMParameterSpec gcmSpec = new GCMParameterSpec(128, nonce);
         cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
         return cipher.doFinal(ptxt);
+    }
+
+    // ---------------------------------------------------------------------
+    // Helper methods
+    // ---------------------------------------------------------------------
+    private static void validateFilename(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            throw new SecurityException("Filename is blank");
+        }
+        // Reject path separators or null bytes explicitly
+        if (fileName.contains("/") || fileName.contains("\\") || fileName.indexOf('\0') >= 0) {
+            throw new SecurityException("Illegal characters in filename");
+        }
+        if (!SAFE_FILENAME.matcher(fileName).matches()) {
+            throw new SecurityException("Filename fails whitelist pattern");
+        }
+    }
+
+    private static void ensureWithinBase(File baseDir, File target) throws IOException {
+        String baseCanonical = baseDir.getCanonicalPath();
+        String targetCanonical = target.getCanonicalPath();
+        if (!targetCanonical.startsWith(baseCanonical + File.separator)) {
+            throw new SecurityException("Attempted path escape");
+        }
+    }
+
+    // Expose safe filename check for other classes (e.g., servlets)
+    public static boolean isSafeFilename(String fileName) {
+        try {
+            validateFilename(fileName);
+            return true;
+        } catch (SecurityException e) {
+            return false;
+        }
     }
 }

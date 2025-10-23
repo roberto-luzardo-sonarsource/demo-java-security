@@ -2,8 +2,6 @@ package demo.security.servlet;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,12 +21,15 @@ public class Insecure {
     ObjectMapper mapper = new ObjectMapper();
     // Explicitly map to String without enabling default typing (removed dangerous polymorphic typing)
     String val = mapper.readValue(obj, String.class);
-    // Use a dedicated temp directory; avoid TOCTOU pattern of delete+mkdir
+    // Use a dedicated temp directory; ensure directory exists
     File tempDir = new File(System.getProperty("java.io.tmpdir"), "app-temp");
-    if (!tempDir.exists()) {
-      tempDir.mkdirs();
+    if (!tempDir.exists() && !tempDir.mkdirs()) {
+      throw new IOException("Unable to create temp directory");
     }
-    Files.exists(Paths.get(tempDir.getAbsolutePath(), val));
+    // Avoid directly combining user data into a path; just log sanitized value length
+    String sanitized = val.replaceAll("[\\r\\n]", " ").trim();
+    java.util.logging.Logger.getLogger(Insecure.class.getName())
+      .fine(() -> "Received data value length=" + sanitized.length());
   }
 
   public String taintedSQL(HttpServletRequest request, Connection connection) throws SQLException {
