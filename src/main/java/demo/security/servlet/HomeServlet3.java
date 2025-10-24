@@ -22,8 +22,8 @@ public class HomeServlet3 extends HttpServlet {
         String name = request.getParameter("name");
         if (name != null) {
             name = name.trim();
-            // Sanitize user input to prevent XSS attacks
-            name = escapeHtml(name);
+            // Sanitize user input to prevent XSS attacks using Apache Commons Text
+            name = org.apache.commons.text.StringEscapeUtils.escapeHtml4(name);
         } else {
             name = "Guest";
         }
@@ -39,18 +39,6 @@ public class HomeServlet3 extends HttpServlet {
         doGet(request, response);
     }
 
-    /**
-     * Escapes HTML special characters to prevent XSS attacks
-     */
-    private String escapeHtml(String input) {
-        if (input == null) {
-            return null;
-        }
-        return input.replace("&", "&amp;")
-                    .replace("<", "&lt;")
-                    .replace(">", "&gt;")
-                    .replace("\"", "&quot;")
-                    .replace("'", "&#x27;");
-    }
+    // ...existing code...
 
 }
