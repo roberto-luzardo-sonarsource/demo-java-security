@@ -7,6 +7,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.text.StringEscapeUtils;
 
 @WebServlet("/helloWorld")
 public class HomeServlet3 extends HttpServlet {
@@ -19,12 +20,18 @@ public class HomeServlet3 extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request,
                          HttpServletResponse response) throws ServletException, IOException {
-        String name = request.getParameter("name").trim();
+        String name = request.getParameter("name");
+        if (name != null) {
+            name = name.trim();
+        }
         // Sanitize user input to prevent XSS
-        String sanitizedName = escapeHtml(name);
+        String sanitizedName = StringEscapeUtils.escapeHtml4(name != null ? name : "");
         response.setContentType("text/html");
-        try (PrintWriter out = response.getWriter()) {
+        PrintWriter out = response.getWriter();
+        try {
             out.print("<h2>Hello " + sanitizedName + "</h2>");
+        } finally {
+            out.close();
         }
     }
 
@@ -33,16 +40,6 @@ public class HomeServlet3 extends HttpServlet {
                           HttpServletResponse response) throws ServletException, IOException {
         doGet(request, response);
     }
-    
-    private String escapeHtml(String input) {
-        if (input == null) {
-            return "";
-        }
-        return input.replace("&", "&amp;")
-                    .replace("<", "&lt;")
-                    .replace(">", "&gt;")
-                    .replace("\"", "&quot;")
-                    .replace("'", "&#x27;");
-    }
 
 }
+
