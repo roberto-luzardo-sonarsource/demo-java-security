@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -148,6 +149,6 @@ public class HomeServlet3Test {
     public void testConstructor() {
         // Test that constructor works without errors
         HomeServlet3 newServlet = new HomeServlet3();
-        assertTrue(newServlet != null);
+        assertNotNull(newServlet);
     }
 }
