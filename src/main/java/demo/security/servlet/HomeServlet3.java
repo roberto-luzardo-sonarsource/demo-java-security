@@ -7,6 +7,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.text.StringEscapeUtils;
 
 @WebServlet("/helloWorld")
 public class HomeServlet3 extends HttpServlet {
@@ -23,8 +24,8 @@ public class HomeServlet3 extends HttpServlet {
         String name = request.getParameter("name");
         if (name != null) {
             name = name.trim();
-            // Sanitize input to prevent XSS attacks - use robust HTML escaping
-            name = escapeHtmlStrict(name);
+            // Sanitize input to prevent XSS attacks using Apache Commons Text
+            name = StringEscapeUtils.escapeHtml4(name);
         } else {
             name = "Guest";
         }
@@ -45,48 +46,5 @@ public class HomeServlet3 extends HttpServlet {
                           HttpServletResponse response) throws ServletException, IOException {
         // Delegate POST requests to GET handler
         doGet(request, response);
-    }
-    
-    /**
-     * Comprehensive HTML escaping to prevent XSS attacks.
-     * Escapes all potentially dangerous characters according to OWASP guidelines.
-     */
-    private String escapeHtmlStrict(String input) {
-        if (input == null) {
-            return null;
-        }
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < input.length(); i++) {
-            char c = input.charAt(i);
-            switch (c) {
-                case '<':
-                    sb.append("&lt;");
-                    break;
-                case '>':
-                    sb.append("&gt;");
-                    break;
-                case '&':
-                    sb.append("&amp;");
-                    break;
-                case '"':
-                    sb.append("&quot;");
-                    break;
-                case '\'':
-                    sb.append("&#x27;");
-                    break;
-                case '/':
-                    sb.append("&#x2F;");
-                    break;
-                default:
-                    // Additional protection for control characters
-                    if (c < 32 || c > 126) {
-                        sb.append("&#").append((int) c).append(";");
-                    } else {
-                        sb.append(c);
-                    }
-                    break;
-            }
-        }
-        return sb.toString();
     }
 }
