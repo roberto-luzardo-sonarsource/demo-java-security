@@ -28,13 +28,10 @@ public class HomeServlet3 extends HttpServlet {
         }
         
         response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        try {
+        try (PrintWriter out = response.getWriter()) {
             // Sanitize user input to prevent XSS using Apache Commons Text
             String sanitizedName = StringEscapeUtils.escapeHtml4(name);
             out.print("<h2>Hello " + sanitizedName + "</h2>");
-        } finally {
-            out.close();
         }
     }
 
