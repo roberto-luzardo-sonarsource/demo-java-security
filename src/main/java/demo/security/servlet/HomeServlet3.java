@@ -7,6 +7,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.text.StringEscapeUtils;
 
 @WebServlet("/helloWorld")
 public class HomeServlet3 extends HttpServlet {
@@ -27,10 +28,13 @@ public class HomeServlet3 extends HttpServlet {
         }
         
         response.setContentType("text/html");
-        try (PrintWriter out = response.getWriter()) {
-            // Sanitize user input to prevent XSS
-            String sanitizedName = escapeHtml(name);
+        PrintWriter out = response.getWriter();
+        try {
+            // Sanitize user input to prevent XSS using Apache Commons Text
+            String sanitizedName = StringEscapeUtils.escapeHtml4(name);
             out.print("<h2>Hello " + sanitizedName + "</h2>");
+        } finally {
+            out.close();
         }
     }
 
@@ -38,17 +42,6 @@ public class HomeServlet3 extends HttpServlet {
     protected void doPost(HttpServletRequest request,
                           HttpServletResponse response) throws ServletException, IOException {
         doGet(request, response);
-    }
-    
-    private String escapeHtml(String input) {
-        if (input == null) {
-            return "";
-        }
-        return input.replace("&", "&amp;")
-                   .replace("<", "&lt;")
-                   .replace(">", "&gt;")
-                   .replace("\"", "&quot;")
-                   .replace("'", "&#x27;");
     }
 
 }
