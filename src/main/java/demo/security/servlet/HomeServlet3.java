@@ -32,6 +32,14 @@ public class HomeServlet3 extends HttpServlet {
             // Sanitize user input to prevent XSS using Apache Commons Text
             String sanitizedName = StringEscapeUtils.escapeHtml4(name);
             out.print("<h2>Hello " + sanitizedName + "</h2>");
+        } catch (IOException e) {
+            // Log error without exposing sensitive information
+            // In production, this would log to a proper logging framework
+            try {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred");
+            } catch (IOException ignored) {
+                // Unable to send error response
+            }
         }
     }
 
