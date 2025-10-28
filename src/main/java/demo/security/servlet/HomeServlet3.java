@@ -14,23 +14,46 @@ public class HomeServlet3 extends HttpServlet {
 
     public HomeServlet3() {
         super();
-        // TODO Auto-generated constructor stub
+        // Default constructor
     }
 
-
+    @Override
     protected void doGet(HttpServletRequest request,
                          HttpServletResponse response) throws ServletException, IOException {
-        String name = request.getParameter("name").trim();
+        String name = request.getParameter("name");
+        if (name != null) {
+            name = name.trim();
+            // Sanitize input to prevent XSS attacks
+            name = escapeHtml(name);
+        } else {
+            name = "Guest";
+        }
+        
         response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        out.print("<h2>Hello "+name+ "</h2>");
-        out.close();
+        try (PrintWriter out = response.getWriter()) {
+            out.print("<h2>Hello " + name + "</h2>");
+        }
     }
 
+    @Override
     protected void doPost(HttpServletRequest request,
                           HttpServletResponse response) throws ServletException, IOException {
-        // TODO Auto-generated method stub
+        // Delegate POST requests to GET handler
         doGet(request, response);
+    }
+    
+    /**
+     * Escapes HTML special characters to prevent XSS attacks
+     */
+    private String escapeHtml(String input) {
+        if (input == null) {
+            return null;
+        }
+        return input.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;")
+                   .replace("\"", "&quot;")
+                   .replace("'", "&#x27;");
     }
 
 }
