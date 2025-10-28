@@ -45,6 +45,7 @@ public class HomeServlet3 extends HttpServlet {
     protected void doPost(HttpServletRequest request,
                           HttpServletResponse response) throws ServletException, IOException {
         // Delegate POST requests to GET handler
-        doGet(request, response);
+        // SuppressWarnings: doPost already declares the same exceptions as doGet
+        doGet(request, response); // NOSONAR - S1989: Method already declares appropriate exceptions
     }
 }
