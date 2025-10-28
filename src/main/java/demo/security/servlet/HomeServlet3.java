@@ -23,15 +23,20 @@ public class HomeServlet3 extends HttpServlet {
         String name = request.getParameter("name");
         if (name != null) {
             name = name.trim();
-            // Sanitize input to prevent XSS attacks
-            name = escapeHtml(name);
+            // Sanitize input to prevent XSS attacks - use robust HTML escaping
+            name = escapeHtmlStrict(name);
         } else {
             name = "Guest";
         }
         
-        response.setContentType("text/html");
-        try (PrintWriter out = response.getWriter()) {
+        response.setContentType("text/html; charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        
+        PrintWriter out = response.getWriter();
+        try {
             out.print("<h2>Hello " + name + "</h2>");
+        } finally {
+            out.close();
         }
     }
 
@@ -43,17 +48,45 @@ public class HomeServlet3 extends HttpServlet {
     }
     
     /**
-     * Escapes HTML special characters to prevent XSS attacks
+     * Comprehensive HTML escaping to prevent XSS attacks.
+     * Escapes all potentially dangerous characters according to OWASP guidelines.
      */
-    private String escapeHtml(String input) {
+    private String escapeHtmlStrict(String input) {
         if (input == null) {
             return null;
         }
-        return input.replace("&", "&amp;")
-                   .replace("<", "&lt;")
-                   .replace(">", "&gt;")
-                   .replace("\"", "&quot;")
-                   .replace("'", "&#x27;");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            switch (c) {
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '>':
+                    sb.append("&gt;");
+                    break;
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                case '"':
+                    sb.append("&quot;");
+                    break;
+                case '\'':
+                    sb.append("&#x27;");
+                    break;
+                case '/':
+                    sb.append("&#x2F;");
+                    break;
+                default:
+                    // Additional protection for control characters
+                    if (c < 32 || c > 126) {
+                        sb.append("&#").append((int) c).append(";");
+                    } else {
+                        sb.append(c);
+                    }
+                    break;
+            }
+        }
+        return sb.toString();
     }
-
 }
