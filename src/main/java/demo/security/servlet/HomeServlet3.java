@@ -23,13 +23,13 @@ public class HomeServlet3 extends HttpServlet {
         try {
             String name = request.getParameter("name");
             if (name != null) {
-                name = sanitizeInput(name.trim());
+                name = name.trim();
             } else {
                 name = "Guest";
             }
-            response.setContentType("text/html");
+            response.setContentType("text/plain");
             PrintWriter out = response.getWriter();
-            out.print("<h2>Hello " + name + "</h2>");
+            out.print("Hello " + name + "!");
             out.close();
         } catch (IOException e) {
             // Log the error internally without exposing sensitive information
@@ -55,18 +55,6 @@ public class HomeServlet3 extends HttpServlet {
             // In case sendError fails, we can't do much more
             // This would typically be logged to server logs
         }
-    }
-
-    private String sanitizeInput(String input) {
-        if (input == null) {
-            return "";
-        }
-        // Basic HTML sanitization to prevent XSS
-        return input.replace("<", "&lt;")
-                   .replace(">", "&gt;")
-                   .replace("\"", "&quot;")
-                   .replace("'", "&#x27;")
-                   .replace("/", "&#x2F;");
     }
 
 }
