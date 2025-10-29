@@ -2,6 +2,8 @@ package demo.security.servlet;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -29,15 +31,22 @@ class HomeServlet3Test {
         assertNotNull(newServlet);
     }
 
-    @Test
-    void testDoGet_withValidName() throws ServletException, IOException {
+    @ParameterizedTest
+    @CsvSource({
+        "'TestUser', 'Hello TestUser!'",
+        "'  Test User  ', 'Hello Test User!'",
+        "'', 'Hello !'",
+        "'<script>alert(''xss'')</script>', 'Hello <script>alert(''xss'')</script>!'",
+        ", 'Hello Guest!'"
+    })
+    void testDoGet_withVariousNames(String inputName, String expectedOutput) throws ServletException, IOException {
         // Arrange
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpServletResponse response = mock(HttpServletResponse.class);
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
         
-        when(request.getParameter("name")).thenReturn("TestUser");
+        when(request.getParameter("name")).thenReturn(inputName);
         when(response.getWriter()).thenReturn(printWriter);
         
         // Act
@@ -46,87 +55,7 @@ class HomeServlet3Test {
         // Assert
         verify(response).setContentType("text/plain");
         printWriter.flush();
-        assertEquals("Hello TestUser!", stringWriter.toString());
-    }
-
-    @Test
-    void testDoGet_withNameContainingWhitespace() throws ServletException, IOException {
-        // Arrange
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        StringWriter stringWriter = new StringWriter();
-        PrintWriter printWriter = new PrintWriter(stringWriter);
-        
-        when(request.getParameter("name")).thenReturn("  Test User  ");
-        when(response.getWriter()).thenReturn(printWriter);
-        
-        // Act
-        servlet.doGet(request, response);
-        
-        // Assert
-        verify(response).setContentType("text/plain");
-        printWriter.flush();
-        assertEquals("Hello Test User!", stringWriter.toString());
-    }
-
-    @Test
-    void testDoGet_withEmptyName() throws ServletException, IOException {
-        // Arrange
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        StringWriter stringWriter = new StringWriter();
-        PrintWriter printWriter = new PrintWriter(stringWriter);
-        
-        when(request.getParameter("name")).thenReturn("");
-        when(response.getWriter()).thenReturn(printWriter);
-        
-        // Act
-        servlet.doGet(request, response);
-        
-        // Assert
-        verify(response).setContentType("text/plain");
-        printWriter.flush();
-        assertEquals("Hello !", stringWriter.toString());
-    }
-
-    @Test
-    void testDoGet_withSpecialCharacters() throws ServletException, IOException {
-        // Arrange
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        StringWriter stringWriter = new StringWriter();
-        PrintWriter printWriter = new PrintWriter(stringWriter);
-        
-        when(request.getParameter("name")).thenReturn("<script>alert('xss')</script>");
-        when(response.getWriter()).thenReturn(printWriter);
-        
-        // Act
-        servlet.doGet(request, response);
-        
-        // Assert
-        verify(response).setContentType("text/plain");
-        printWriter.flush();
-        assertEquals("Hello <script>alert('xss')</script>!", stringWriter.toString());
-    }
-
-    @Test
-    void testDoGet_withNullName() throws ServletException, IOException {
-        // Arrange
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        StringWriter stringWriter = new StringWriter();
-        PrintWriter printWriter = new PrintWriter(stringWriter);
-        
-        when(request.getParameter("name")).thenReturn(null);
-        when(response.getWriter()).thenReturn(printWriter);
-        
-        // Act
-        servlet.doGet(request, response);
-        
-        // Assert
-        verify(response).setContentType("text/plain");
-        printWriter.flush();
-        assertEquals("Hello Guest!", stringWriter.toString());
+        assertEquals(expectedOutput, stringWriter.toString());
     }
 
     @Test
