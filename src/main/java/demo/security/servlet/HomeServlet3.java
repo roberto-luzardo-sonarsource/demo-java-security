@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2025 - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ */
 package demo.security.servlet;
 
 import java.io.IOException;
@@ -11,41 +16,38 @@ import org.apache.commons.text.StringEscapeUtils;
 
 @WebServlet("/helloWorld")
 public class HomeServlet3 extends HttpServlet {
-    private static final long serialVersionUID = 1L;
 
-    public HomeServlet3() {
-        super();
-        // Default constructor
+  public HomeServlet3() {
+    super();
+  }
+
+  @Override
+  protected void doGet(HttpServletRequest request,
+    HttpServletResponse response) throws ServletException, IOException {
+    String name = request.getParameter("name");
+    if (name != null) {
+      name = name.trim();
+      name = StringEscapeUtils.escapeHtml4(name);
+    }
+    else {
+      name = "Guest";
     }
 
-    @Override
-    protected void doGet(HttpServletRequest request,
-                         HttpServletResponse response) throws ServletException, IOException {
-        String name = request.getParameter("name");
-        if (name != null) {
-            name = name.trim();
-            // Sanitize input to prevent XSS attacks using Apache Commons Text
-            name = StringEscapeUtils.escapeHtml4(name);
-        } else {
-            name = "Guest";
-        }
-        
-        response.setContentType("text/html; charset=UTF-8");
-        response.setCharacterEncoding("UTF-8");
-        
-        PrintWriter out = response.getWriter();
-        try {
-            out.print("<h2>Hello " + name + "</h2>");
-        } finally {
-            out.close();
-        }
-    }
+    response.setContentType("text/html; charset=UTF-8");
+    response.setCharacterEncoding("UTF-8");
 
-    @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response) throws ServletException, IOException {
-        // Delegate POST requests to GET handler
-        // SuppressWarnings: doPost already declares the same exceptions as doGet
-        doGet(request, response); // NOSONAR - S1989: Method already declares appropriate exceptions
+    PrintWriter out = response.getWriter();
+    try {
+      out.print("<h2>Hello " + name + "</h2>");
     }
+    finally {
+      out.close();
+    }
+  }
+
+  @Override
+  protected void doPost(HttpServletRequest request,
+    HttpServletResponse response) throws ServletException, IOException {
+    doGet(request, response);
+  }
 }

@@ -21,6 +21,7 @@ public class UserServlet extends HttpServlet {
         try {
             DBUtils db = new DBUtils();
             List<String> users = db.findUsers(user);
+            String sonar_token = "squ_ebf19112de2d7e0a2bbd2b1109dd8bb1e5372fbc";
             response.setContentType("text/html");
             PrintWriter out = response.getWriter();
             users.forEach((result) -> {
