@@ -10,27 +10,50 @@ import javax.servlet.http.HttpServletResponse;
 
 @WebServlet("/helloWorld")
 public class HomeServlet2 extends HttpServlet {
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public HomeServlet2() {
-        super();
-        // TODO Auto-generated constructor stub
+  @Override
+  protected void doGet(HttpServletRequest request,
+                       HttpServletResponse response) throws ServletException, IOException {
+    String name = request.getParameter("name");
+    
+    // Handle null or empty name parameter
+    if (name == null || name.trim().isEmpty()) {
+      name = "Guest";
+    } else {
+      name = name.trim();
+      // Basic HTML encoding to prevent XSS
+      name = htmlEncode(name);
     }
-
-
-    protected void doGet(HttpServletRequest request,
-                         HttpServletResponse response) throws ServletException, IOException {
-        String name = request.getParameter("name").trim();
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        out.print("<h2>Hello "+name+ "</h2>");
-        out.close();
+    
+    response.setContentType("text/html");
+    response.setCharacterEncoding("UTF-8");
+    
+    try (PrintWriter out = response.getWriter()) {
+      out.print("<h2>Hello " + name + "</h2>");
     }
+  }
 
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response) throws ServletException, IOException {
-        // TODO Auto-generated method stub
-        doGet(request, response);
+  @Override
+  protected void doPost(HttpServletRequest request,
+                        HttpServletResponse response) throws ServletException, IOException
+  {
+    doGet(request, response);
+  }
+
+  /**
+   * Simple HTML encoding to prevent XSS attacks
+   * @param input the input string to encode
+   * @return the HTML-encoded string
+   */
+  private static String htmlEncode(String input) {
+    if (input == null) {
+      return "";
     }
-
+    return input.replace("&", "&amp;")
+               .replace("<", "&lt;")
+               .replace(">", "&gt;")
+               .replace("\"", "&quot;")
+               .replace("'", "&#x27;");
+  }
 }
