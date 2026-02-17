@@ -24,6 +24,9 @@ public class HomeServlet extends HttpServlet {
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
         out.print("<h2>Hello "+name+ "</h2>");
+        out.print("<h2>Hello3 "+name+ "</h2>");
+        out.print("<h2>Hello4 "+name+ "</h2>");
+        out.print("<h2>Hello5 "+name+ "</h2>");
         out.close();
     }
 
