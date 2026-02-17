@@ -1,0 +1,13 @@
+name: Custom Webhook Trigger
+on:
+  repository_dispatch:
+    types: 
+      - quality-gate-result
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print event payload
+        run: echo "Received event type: ${{ github.event.action }}"
+      - name: Print custom input data (optional)
+        run: echo "Custom data: ${{ github.event.client_payload.data }}"
