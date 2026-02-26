@@ -21,6 +21,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 30  # Check every 30 seconds
           allowed-conclusions: success  # Only proceed if workflow succeeds (exit 0)
+          fail-on-no-checks: false
         timeout-minutes: 30
         continue-on-error: true
 
