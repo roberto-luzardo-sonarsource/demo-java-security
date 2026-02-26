@@ -5,6 +5,7 @@ on:
       - quality-gate-result
 jobs:
   build:
+    name: Process SonarQube Quality Gate Result
     runs-on: ubuntu-latest
     steps:
       - name: Process webhook data
