@@ -13,3 +13,16 @@ jobs:
           echo "Environment: ${{ github.event.client_payload.environment }}"
           echo "Version: ${{ github.event.client_payload.version }}"
           echo "Full payload: ${{ toJson(github.event.client_payload) }}"
+      
+      - name: Check Quality Gate Status
+        run: |
+          quality_gate_status="${{ github.event.client_payload.qualityGate.status }}"
+          echo "Quality Gate Status: $quality_gate_status"
+          
+          if [ "$quality_gate_status" = "ERROR" ]; then
+            echo "❌ Quality Gate failed with ERROR status"
+            exit 1
+          else
+            echo "✅ Quality Gate passed with status: $quality_gate_status"
+            exit 0
+          fi
