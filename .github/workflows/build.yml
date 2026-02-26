@@ -8,9 +8,29 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  wait-for-quality-gate:
+    name: Wait for SonarQube Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Custom Webhook Trigger workflow
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          check-name: 'build'  # Job name from sonar-webhook-test.yml
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 30  # Check every 30 seconds
+          allowed-conclusions: success  # Only proceed if workflow succeeds (exit 0)
+        timeout-minutes: 30
+
+      - name: Verify Quality Gate Status
+        run: |
+          echo "✅ Quality Gate verification completed successfully"
+          echo "Proceeding to build step..."
+
   build:
     name: Build
     runs-on: ubuntu-latest
+    needs: wait-for-quality-gate
     
     steps:
       - uses: actions/checkout@v4
