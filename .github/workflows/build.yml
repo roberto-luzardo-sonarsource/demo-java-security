@@ -55,19 +55,25 @@ jobs:
               continue
             fi
             
+            # Debug: Check if response contains workflow_runs
+            workflow_runs_count=$(echo "$response" | jq -r '.workflow_runs | length // 0')
+            echo "📋 Found $workflow_runs_count total workflow runs"
+            
             # Find the most recent Custom Webhook Trigger workflow run that has completed
             workflow_run=$(echo "$response" | jq -r --arg workflow_name "$WORKFLOW_NAME" '
-              .workflow_runs[] | 
+              [.workflow_runs[]? | 
               select(.name == $workflow_name) |
-              select(.status == "completed") |
-              sort_by(.created_at) | 
-              reverse |
-              .[0]')
+              select(.status == "completed")] |
+              if length > 0 then
+                sort_by(.created_at) | reverse | .[0]
+              else
+                null
+              end')
             
             if [ "$workflow_run" != "null" ] && [ -n "$workflow_run" ]; then
-              conclusion=$(echo "$workflow_run" | jq -r '.conclusion')
-              run_id=$(echo "$workflow_run" | jq -r '.id')
-              created_at=$(echo "$workflow_run" | jq -r '.created_at')
+              conclusion=$(echo "$workflow_run" | jq -r '.conclusion // "unknown"')
+              run_id=$(echo "$workflow_run" | jq -r '.id // "unknown"')
+              created_at=$(echo "$workflow_run" | jq -r '.created_at // "unknown"')
               
               echo "✅ Workflow run found (ID: $run_id, Created: $created_at)"
               echo "📊 Conclusion: $conclusion"
