@@ -12,27 +12,108 @@ jobs:
     name: Wait for SonarQube Quality Gate
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for Custom Webhook Trigger workflow
+      - name: Poll for SonarQube Quality Gate using GitHub API
         id: quality-gate-check
-        uses: lewagon/wait-on-check-action@v1.5.0
-        with:
-          ref: ${{ github.ref }}
-          check-name: "Process SonarQube Quality Gate Result"  # Job name from sonar-webhook-test.yml
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 30  # Check every 30 seconds
-          allowed-conclusions: success  # Only proceed if workflow succeeds (exit 0)
-          fail-on-no-checks: false
-        timeout-minutes: 30
+        run: |
+          #!/bin/bash
+          set -e
+          
+          REPO_OWNER="${{ github.repository_owner }}"
+          REPO_NAME="${{ github.event.repository.name }}"
+          REF="${{ github.ref }}"
+          WORKFLOW_NAME="Custom Webhook Trigger"
+          MAX_WAIT_TIME=1800  # 30 minutes in seconds
+          POLL_INTERVAL=10    # 10 seconds
+          
+          echo "🔍 Polling for '$WORKFLOW_NAME' workflow completion..."
+          echo "Repository: $REPO_OWNER/$REPO_NAME"
+          echo "Ref: $REF"
+          
+          start_time=$(date +%s)
+          
+          while true; do
+            current_time=$(date +%s)
+            elapsed_time=$((current_time - start_time))
+            
+            if [ $elapsed_time -gt $MAX_WAIT_TIME ]; then
+              echo "❌ Timeout: Workflow did not complete within 30 minutes"
+              echo "outcome=timeout" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+            
+            echo "⏱️  Checking workflow status... (elapsed: ${elapsed_time}s)"
+            
+            # Get workflow runs for the repository
+            response=$(curl -s \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?per_page=50")
+            
+            if [ $? -ne 0 ]; then
+              echo "⚠️  Failed to fetch workflow runs, retrying..."
+              sleep $POLL_INTERVAL
+              continue
+            fi
+            
+            # Find the most recent Custom Webhook Trigger workflow run that has completed
+            workflow_run=$(echo "$response" | jq -r --arg workflow_name "$WORKFLOW_NAME" '
+              .workflow_runs[] | 
+              select(.name == $workflow_name) |
+              select(.status == "completed") |
+              sort_by(.created_at) | 
+              reverse |
+              .[0]')
+            
+            if [ "$workflow_run" != "null" ] && [ -n "$workflow_run" ]; then
+              conclusion=$(echo "$workflow_run" | jq -r '.conclusion')
+              run_id=$(echo "$workflow_run" | jq -r '.id')
+              created_at=$(echo "$workflow_run" | jq -r '.created_at')
+              
+              echo "✅ Workflow run found (ID: $run_id, Created: $created_at)"
+              echo "📊 Conclusion: $conclusion"
+              
+              if [ "$conclusion" = "success" ]; then
+                echo "🎉 Quality Gate passed! Proceeding to build..."
+                echo "outcome=success" >> $GITHUB_OUTPUT
+                exit 0
+              elif [ "$conclusion" = "failure" ]; then
+                echo "❌ Quality Gate failed!"
+                echo "outcome=failure" >> $GITHUB_OUTPUT
+                exit 0
+              elif [ "$conclusion" = "cancelled" ]; then
+                echo "🚫 Quality Gate workflow was cancelled"
+                echo "outcome=cancelled" >> $GITHUB_OUTPUT
+                exit 1
+              else
+                echo "⚠️  Unexpected conclusion: $conclusion"
+                echo "outcome=unknown" >> $GITHUB_OUTPUT
+                exit 1
+              fi
+            else
+              echo "⏳ No completed '$WORKFLOW_NAME' workflow found yet, waiting $POLL_INTERVAL seconds..."
+              sleep $POLL_INTERVAL
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
       - name: Check Quality Gate Result
         run: |
-          if [ "${{ steps.quality-gate-check.outcome }}" = "failure" ]; then
+          outcome="${{ steps.quality-gate-check.outputs.outcome }}"
+          
+          if [ "$outcome" = "failure" ]; then
             echo "BUILD FAILED: SONARQUBE QUALITY GATE IS FAILING"
             exit 1
-          else
+          elif [ "$outcome" = "success" ]; then
             echo "✅ Quality Gate verification completed successfully"
             echo "Proceeding to build step..."
+          elif [ "$outcome" = "timeout" ] || [ "$outcome" = "cancelled" ] || [ "$outcome" = "unknown" ]; then
+            echo "BUILD FAILED: Quality Gate check did not complete successfully (Status: $outcome)"
+            exit 1
+          else
+            echo "BUILD FAILED: Unexpected Quality Gate status: $outcome"
+            exit 1
           fi
 
   build:
