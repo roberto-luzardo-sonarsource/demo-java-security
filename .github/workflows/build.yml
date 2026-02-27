@@ -30,6 +30,8 @@ jobs:
           echo "Ref: $REF"
           
           start_time=$(date +%s)
+          start_time_iso=$(date -u -d "@$start_time" +"%Y-%m-%dT%H:%M:%SZ")
+          echo "📅 Polling started at: $start_time_iso"
           
           while true; do
             current_time=$(date +%s)
@@ -61,10 +63,11 @@ jobs:
             echo "📋 Found $workflow_runs_count total workflow runs"
             
             # Find the most recent Custom Webhook Trigger workflow run that has completed
-            workflow_run=$(echo "$response" | jq -r --arg workflow_name "$WORKFLOW_NAME" '
+            workflow_run=$(echo "$response" | jq -r --arg workflow_name "$WORKFLOW_NAME" --arg start_time "$start_time_iso" '
               [.workflow_runs[]? | 
               select(.name == $workflow_name) |
-              select(.status == "completed")] |
+              select(.status == "completed") |
+              select(.created_at > $start_time)] |
               if length > 0 then
                 sort_by(.created_at) | reverse | .[0]
               else
