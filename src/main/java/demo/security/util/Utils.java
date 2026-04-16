@@ -30,7 +30,8 @@ public class Utils {
     }
 
     public static void deleteFile(String fileName) throws IOException {
-        File file = new File(fileName);
+        File baseDir = new File("/var/app/data");
+        File file = new File(baseDir, fileName);
         FileUtils.forceDelete(file);
     }
 
