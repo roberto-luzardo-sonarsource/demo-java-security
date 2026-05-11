@@ -7,6 +7,7 @@ package demo.security.servlet;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -25,6 +26,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.owasp.encoder.Encode;
 
 /**
  * Intentionally vulnerable servlet for SonarQube security testing
@@ -35,8 +37,7 @@ public class VulnerableServlet extends HttpServlet {
     
     private static final long serialVersionUID = 1L;
     
-    // Hardcoded credentials - Security Hotspot
-    private static final String DB_PASSWORD = "admin123";
+    // DB password is loaded from the DB_PASSWORD environment variable at use site
     private static final String API_KEY = "sk-1234567890abcdef";
     
     // Weak hash algorithm - Security Vulnerability
@@ -62,10 +63,9 @@ public class VulnerableServlet extends HttpServlet {
         } else if ("admin".equals(action)) {
             handleAdminFunction(request, response);
         } else {
-            // XSS Vulnerability - Direct output without encoding
             String message = request.getParameter("message");
             PrintWriter out = response.getWriter();
-            out.println("<h1>Welcome! Your message: " + message + "</h1>");
+            out.println("<h1>Welcome! Your message: " + Encode.forHtml(message) + "</h1>");
             // Resource not closed - Bug
         }
     }
@@ -79,44 +79,31 @@ public class VulnerableServlet extends HttpServlet {
     /**
      * SQL Injection vulnerability example
      */
-    private void handleLogin(HttpServletRequest request, HttpServletResponse response) 
+    private void handleLogin(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        
+
         String username = request.getParameter("username");
         String password = request.getParameter("password");
-        
-        Connection conn = null;
-        Statement stmt = null;
-        ResultSet rs = null;
-        
-        try {
-            // Hardcoded database connection - Security Hotspot
-            conn = DriverManager.getConnection("jdbc:h2:mem:testdb", "sa", DB_PASSWORD);
-            stmt = conn.createStatement();
-            
-            // SQL Injection vulnerability
-            String sql = "SELECT * FROM users WHERE username = '" + username + 
-                        "' AND password = '" + password + "'";
-            rs = stmt.executeQuery(sql);
-            
-            if (rs.next()) {
-                // Insecure cookie - Security Hotspot
-                Cookie sessionCookie = new Cookie("sessionId", generateSessionId());
-                sessionCookie.setHttpOnly(false); // Should be true
-                sessionCookie.setSecure(false);   // Should be true for HTTPS
-                response.addCookie(sessionCookie);
-                
-                response.getWriter().println("Login successful!");
-            } else {
-                response.getWriter().println("Invalid credentials");
+
+        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+        try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:testdb", "sa", requireEnv("DB_PASSWORD"));
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Cookie sessionCookie = new Cookie("sessionId", generateSessionId());
+                    sessionCookie.setHttpOnly(true);
+                    sessionCookie.setSecure(true);
+                    response.addCookie(sessionCookie);
+
+                    response.getWriter().println("Login successful!");
+                } else {
+                    response.getWriter().println("Invalid credentials");
+                }
             }
-            
         } catch (Exception e) {
-            // Empty catch block - Code Smell
-            // Should log the exception
-        } finally {
-            // Resource leak - resources not properly closed
-            // Should close rs, stmt, conn in finally block
+            // Empty catch block - Code Smell (pre-existing)
         }
     }
     
@@ -138,23 +125,22 @@ public class VulnerableServlet extends HttpServlet {
             try {
                 conn = getConnection();
                 
-                // Partially vulnerable - still injectable through category parameter
-                String sql = "SELECT * FROM products WHERE name LIKE ? AND category = '" + category + "'";
+                String sql = "SELECT * FROM products WHERE name LIKE ? AND category = ?";
                 pstmt = conn.prepareStatement(sql);
                 pstmt.setString(1, "%" + searchTerm + "%");
-                
+                pstmt.setString(2, category);
+
                 ResultSet rs = pstmt.executeQuery();
                 List<String> results = new ArrayList<>();
-                
+
                 while (rs.next()) {
                     results.add(rs.getString("name"));
                 }
-                
-                // XSS vulnerability in output
+
                 PrintWriter out = response.getWriter();
-                out.println("<h2>Search results for: " + searchTerm + "</h2>");
+                out.println("<h2>Search results for: " + Encode.forHtml(searchTerm) + "</h2>");
                 for (String result : results) {
-                    out.println("<p>" + result + "</p>");
+                    out.println("<p>" + Encode.forHtml(result) + "</p>");
                 }
                 
             } catch (Exception e) {
@@ -172,20 +158,24 @@ public class VulnerableServlet extends HttpServlet {
             throws IOException {
         
         String fileName = request.getParameter("file");
-        
-        // Path traversal vulnerability
-        File file = new File("/app/data/" + fileName);
-        
-        // Potential information disclosure
+
+        Path baseDir = Paths.get("/app/data").toAbsolutePath().normalize();
+        Path resolved = baseDir.resolve(fileName).normalize();
+        if (!resolved.startsWith(baseDir)) {
+            response.sendError(400, "Invalid file path");
+            return;
+        }
+
+        File file = resolved.toFile();
         if (file.exists()) {
             try {
-                byte[] content = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
+                byte[] content = Files.readAllBytes(resolved);
                 response.getOutputStream().write(content);
             } catch (IOException e) {
                 // Swallow exception - Code Smell
             }
         } else {
-            response.sendError(404, "File not found: " + fileName); // Path disclosure
+            response.sendError(404);
         }
     }
     
@@ -271,12 +261,19 @@ public class VulnerableServlet extends HttpServlet {
      * Database connection with hardcoded credentials
      */
     private Connection getConnection() throws Exception {
-        // Multiple issues: hardcoded credentials, no connection pooling
         String url = "jdbc:mysql://localhost:3306/testdb";
         String username = "root";
-        String password = "password123"; // Hardcoded password
-        
+        String password = requireEnv("MYSQL_PASSWORD");
+
         return DriverManager.getConnection(url, username, password);
+    }
+
+    private static String requireEnv(String name) {
+        String value = System.getenv(name);
+        if (value == null || value.isEmpty()) {
+            throw new IllegalStateException("Required environment variable " + name + " is not set");
+        }
+        return value;
     }
     
     // Dead code - unreachable method
