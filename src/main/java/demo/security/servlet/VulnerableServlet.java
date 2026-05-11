@@ -85,37 +85,25 @@ public class VulnerableServlet extends HttpServlet {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-
-        try {
-            conn = DriverManager.getConnection("jdbc:h2:mem:testdb", "sa", requireEnv("DB_PASSWORD"));
-
-            String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
-            pstmt = conn.prepareStatement(sql);
+        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+        try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:testdb", "sa", requireEnv("DB_PASSWORD"));
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, username);
             pstmt.setString(2, password);
-            rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                // Insecure cookie - Security Hotspot
-                Cookie sessionCookie = new Cookie("sessionId", generateSessionId());
-                sessionCookie.setHttpOnly(false); // Should be true
-                sessionCookie.setSecure(false);   // Should be true for HTTPS
-                response.addCookie(sessionCookie);
-                
-                response.getWriter().println("Login successful!");
-            } else {
-                response.getWriter().println("Invalid credentials");
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Cookie sessionCookie = new Cookie("sessionId", generateSessionId());
+                    sessionCookie.setHttpOnly(false);
+                    sessionCookie.setSecure(false);
+                    response.addCookie(sessionCookie);
+
+                    response.getWriter().println("Login successful!");
+                } else {
+                    response.getWriter().println("Invalid credentials");
+                }
             }
-            
         } catch (Exception e) {
-            // Empty catch block - Code Smell
-            // Should log the exception
-        } finally {
-            // Resource leak - resources not properly closed
-            // Should close rs, stmt, conn in finally block
+            // Empty catch block - Code Smell (pre-existing)
         }
     }
     
