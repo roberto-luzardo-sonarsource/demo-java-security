@@ -93,8 +93,8 @@ public class VulnerableServlet extends HttpServlet {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     Cookie sessionCookie = new Cookie("sessionId", generateSessionId());
-                    sessionCookie.setHttpOnly(false);
-                    sessionCookie.setSecure(false);
+                    sessionCookie.setHttpOnly(true);
+                    sessionCookie.setSecure(true);
                     response.addCookie(sessionCookie);
 
                     response.getWriter().println("Login successful!");
