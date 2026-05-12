@@ -13,15 +13,18 @@ public class DBUtils {
                 "mYJDBCUrl", "myJDBCUser", "myJDBCPass");
     }
 
-    public List<String> findUsers(String user) throws Exception {
-        String query = "SELECT userid FROM users WHERE username = '" + user  + "'";
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery(query);
-        List<String> users = new ArrayList<String>();
-        while (resultSet.next()){
-            users.add(resultSet.getString(0));
+    public List<String> findUsers(String user) throws SQLException {
+        String query = "SELECT userid FROM users WHERE username = ?";
+        try (PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setString(1, user);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<String> users = new ArrayList<>();
+                while (rs.next()) {
+                    users.add(rs.getString(1));
+                }
+                return users;
+            }
         }
-        return users;
     }
 
     public List<String> findItem(String itemId) throws Exception {
