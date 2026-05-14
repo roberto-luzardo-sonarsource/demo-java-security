@@ -34,18 +34,4 @@ public class DBUtils {
         }
         return items;
     }
-
-    public List<String> findIssues(String status) throws SQLException {
-        String query = "SELECT issue_id FROM issues WHERE status = ?";
-        try (PreparedStatement ps = connection.prepareStatement(query)) {
-            ps.setString(1, status);
-            try (ResultSet rs = ps.executeQuery()) {
-                List<String> issues = new ArrayList<>();
-                while (rs.next()) {
-                    issues.add(rs.getString(1));
-                }
-                return issues;
-            }
-        }
-    }
 }
