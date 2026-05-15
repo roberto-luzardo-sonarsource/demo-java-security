@@ -5,21 +5,21 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AsymmetricEncryptionUtilTest {
+class AsymmetricEncryptionUtilTest {
     private AsymmetricEncryptionUtil util;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         util = new AsymmetricEncryptionUtil();
     }
 
     @Test
-    public void testGenerateKeys() {
+    void testGenerateKeys() {
         assertDoesNotThrow(() -> util.generateKeys(2048));
     }
 
     @Test
-    public void testEncryptDecrypt() throws Exception {
+    void testEncryptDecrypt() throws Exception {
         util.generateKeys(2048);
         String plaintext = "Hello, World!";
         String encrypted = util.encrypt(plaintext);
@@ -32,7 +32,7 @@ public class AsymmetricEncryptionUtilTest {
     }
 
     @Test
-    public void testEncryptWithoutKeyPair() {
+    void testEncryptWithoutKeyPair() {
         Exception exception = assertThrows(IllegalStateException.class, () -> {
             util.encrypt("Hello, World!");
         });
@@ -40,7 +40,7 @@ public class AsymmetricEncryptionUtilTest {
     }
 
     @Test
-    public void testDecryptWithoutKeyPair() {
+    void testDecryptWithoutKeyPair() {
         Exception exception = assertThrows(IllegalStateException.class, () -> {
             util.decrypt("someEncryptedText");
         });

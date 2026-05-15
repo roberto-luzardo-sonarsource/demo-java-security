@@ -12,14 +12,14 @@ public class RSAKeyGeneratorUtilTest {
     private final int KEY_SIZE = 1024;
 
     @Test
-    public void testModulusCalculation() {
+    void testModulusCalculation() {
         RSAKeyGeneratorUtil rsa = new RSAKeyGeneratorUtil(KEY_SIZE);
         BigInteger expectedModulus = rsa.getP().multiply(rsa.getQ());
         assertEquals(expectedModulus, rsa.getN(), "Modulus (n) should equal p * q.");
     }
 
     @Test
-    public void testPhiCalculation() {
+    void testPhiCalculation() {
         RSAKeyGeneratorUtil rsa = new RSAKeyGeneratorUtil(KEY_SIZE);
         BigInteger expectedPhi = (rsa.getP().subtract(BigInteger.ONE))
                                    .multiply(rsa.getQ().subtract(BigInteger.ONE));
@@ -27,14 +27,14 @@ public class RSAKeyGeneratorUtilTest {
     }
 
     @Test
-    public void testPublicExponentCoprimeWithPhi() {
+    void testPublicExponentCoprimeWithPhi() {
         RSAKeyGeneratorUtil rsa = new RSAKeyGeneratorUtil(KEY_SIZE);
         BigInteger gcd = rsa.getPhi().gcd(rsa.getE());
         assertEquals(BigInteger.ONE, gcd, "Public exponent e must be coprime with phi.");
     }
 
     @Test
-    public void testPrivateExponentCalculation() {
+    void testPrivateExponentCalculation() {
         RSAKeyGeneratorUtil rsa = new RSAKeyGeneratorUtil(KEY_SIZE);
         // Check that (e * d) mod phi == 1
         BigInteger productModPhi = rsa.getE().multiply(rsa.getD()).mod(rsa.getPhi());
