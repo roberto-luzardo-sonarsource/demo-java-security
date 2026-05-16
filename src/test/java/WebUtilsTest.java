@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 public class WebUtilsTest {
 
     @Test
-    public void getSessionId_withValidRequest() {
+    void getSessionId_withValidRequest() {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         when(request.getRequestedSessionId()).thenReturn("validSessionId");
 
