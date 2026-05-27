@@ -26,7 +26,7 @@ public class WebUtilsTest {
     }
 
     @Test
-    public void escapeHtml_encodesSpecialCharacters() {
+    void escapeHtml_encodesSpecialCharacters() {
         assertEquals("&lt;script&gt;", WebUtils.escapeHtml("<script>"));
     }
 

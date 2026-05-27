@@ -1,7 +1,6 @@
 import demo.security.util.Utils;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +25,7 @@ public class UtilsTest {
     public void executeJs_allowsBlankInput() {
         Utils.executeJs("");
         Utils.executeJs(null);
+        assertThrows(SecurityException.class, () -> Utils.executeJs("alert(1)"));
     }
 
     @Test
