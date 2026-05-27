@@ -6,9 +6,6 @@ import org.apache.commons.io.FileUtils;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -34,10 +31,10 @@ public class Utils {
         FileUtils.forceDelete(file);
     }
 
-    public static void executeJs(String input) throws ScriptException {
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("JavaScript");
-        engine.eval(input);
+    public static void validateScriptInput(String input) {
+        if (input == null || input.isBlank()) {
+            throw new IllegalArgumentException("Script input must not be empty");
+        }
     }
 
     public static void encrypt(byte[] key, byte[] ptxt) throws Exception {
