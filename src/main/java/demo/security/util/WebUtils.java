@@ -9,6 +9,18 @@ import java.nio.charset.StandardCharsets;
 
 public class WebUtils {
 
+    public static String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+    }
+
     public void addCookie(HttpServletResponse response, String name, String value) {
         Cookie c = new Cookie(name, value);
         response.addCookie(c);

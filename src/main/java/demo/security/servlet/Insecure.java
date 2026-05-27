@@ -8,6 +8,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
@@ -33,10 +34,16 @@ public class Insecure {
 
   public String taintedSQL(HttpServletRequest request, Connection connection) throws Exception {
     String user = request.getParameter("user");
-    String query = "SELECT userid FROM users WHERE username = '" + user  + "'";
-    Statement statement = connection.createStatement();
-    ResultSet resultSet = statement.executeQuery(query);
-    return resultSet.getString(0);
+    String query = "SELECT userid FROM users WHERE username = ?";
+    try (PreparedStatement statement = connection.prepareStatement(query)) {
+      statement.setString(1, user);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        if (resultSet.next()) {
+          return resultSet.getString(1);
+        }
+      }
+    }
+    return null;
   }
   
   public String hotspotSQL(Connection connection, String user) throws Exception {

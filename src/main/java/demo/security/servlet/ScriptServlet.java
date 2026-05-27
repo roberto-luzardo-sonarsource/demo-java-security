@@ -16,7 +16,7 @@ public class ScriptServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String data = request.getParameter("data");
         try {
-            Utils.executeJs(data);
+            Utils.rejectDynamicScriptExecution(data);
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }
