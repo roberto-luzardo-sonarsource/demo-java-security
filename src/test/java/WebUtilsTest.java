@@ -6,10 +6,10 @@ import javax.servlet.http.HttpServletRequest;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
-public class WebUtilsTest {
+class WebUtilsTest {
 
     @Test
-    public void getSessionId_withValidRequest() {
+    void getSessionId_withValidRequest() {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         when(request.getRequestedSessionId()).thenReturn("validSessionId");
 
@@ -17,7 +17,7 @@ public class WebUtilsTest {
     }
 
     @Test
-    public void getSessionId_withNullSessionId() {
+    void getSessionId_withNullSessionId() {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         when(request.getRequestedSessionId()).thenReturn(null);
 
@@ -25,7 +25,7 @@ public class WebUtilsTest {
     }
 
     @Test
-    public void getSessionId_withIOException() {
+    void getSessionId_withIOException() {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         when(request.getRequestedSessionId()).thenThrow(new RuntimeException());
 
