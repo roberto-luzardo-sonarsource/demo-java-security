@@ -2,7 +2,6 @@ import demo.security.servlet.CommonVulnerabilities;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -16,7 +15,7 @@ import java.sql.SQLException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class CommonVulnerabilitiesTest {
+class CommonVulnerabilitiesTest {
 
   private CommonVulnerabilities vulnerabilities;
   private Connection connection;
@@ -122,7 +121,7 @@ public class CommonVulnerabilitiesTest {
   }
 
   @Test
-  void deserializeRequest_parsesJsonMap() throws Exception {
+  void deserializeRequest_parsesJsonMap() {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getParameter("payload")).thenReturn("{\"role\":\"admin\"}");
 
