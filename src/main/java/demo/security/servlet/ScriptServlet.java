@@ -2,7 +2,6 @@ package demo.security.servlet;
 
 import demo.security.util.Utils;
 
-import javax.script.ScriptException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -17,7 +16,7 @@ public class ScriptServlet extends HttpServlet {
         String data = request.getParameter("data");
         try {
             Utils.executeJs(data);
-        } catch (ScriptException e) {
+        } catch (SecurityException e) {
             throw new RuntimeException(e);
         }
     }

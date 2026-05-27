@@ -14,6 +14,24 @@ public class WebUtils {
         response.addCookie(c);
     }
 
+    public static String escapeHtml(String input) {
+        if (input == null) {
+            return "";
+        }
+        StringBuilder escaped = new StringBuilder(input.length());
+        for (char c : input.toCharArray()) {
+            switch (c) {
+                case '&' -> escaped.append("&amp;");
+                case '<' -> escaped.append("&lt;");
+                case '>' -> escaped.append("&gt;");
+                case '"' -> escaped.append("&quot;");
+                case '\'' -> escaped.append("&#x27;");
+                default -> escaped.append(c);
+            }
+        }
+        return escaped.toString();
+    }
+
     public static void getSessionId(HttpServletRequest request){
         String sessionId = request.getRequestedSessionId();
         if (sessionId != null){

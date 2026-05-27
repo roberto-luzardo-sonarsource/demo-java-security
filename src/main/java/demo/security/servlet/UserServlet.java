@@ -1,20 +1,22 @@
 package demo.security.servlet;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import demo.security.util.DBUtils;
 import demo.security.util.SessionHeader;
+import demo.security.util.WebUtils;
 import org.apache.commons.codec.binary.Base64;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.util.List;
 
 @WebServlet("/users")
 public class UserServlet extends HttpServlet {
+    private static final ObjectMapper SESSION_MAPPER = new ObjectMapper();
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String user = request.getParameter("username");
@@ -24,7 +26,7 @@ public class UserServlet extends HttpServlet {
             response.setContentType("text/html");
             PrintWriter out = response.getWriter();
             users.forEach((result) -> {
-                        out.print("<h2>User "+result+ "</h2>");
+                        out.print("<h2>User " + WebUtils.escapeHtml(result) + "</h2>");
             });
             out.close();
         } catch (Exception e) {
@@ -38,8 +40,7 @@ public class UserServlet extends HttpServlet {
         if (sessionAuth != null) {
             try {
                 byte[] decoded = Base64.decodeBase64(sessionAuth);
-                ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(decoded));
-                return (SessionHeader) in.readObject();
+                return SESSION_MAPPER.readValue(decoded, SessionHeader.class);
             } catch (Exception e) {
                 return null;
             }
@@ -58,7 +59,7 @@ public class UserServlet extends HttpServlet {
             response.setContentType("text/html");
             PrintWriter out = response.getWriter();
             users.forEach((result) -> {
-                out.print("<h2>User "+result+ "</h2>");
+                out.print("<h2>User " + WebUtils.escapeHtml(result) + "</h2>");
             });
             out.close();
         } catch (Exception e) {
