@@ -1,5 +1,6 @@
 import demo.security.util.SonarVulnerableExamples;
 import org.junit.jupiter.api.Test;
+
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,6 +9,7 @@ import java.sql.SQLException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,7 +23,7 @@ import static org.mockito.Mockito.when;
 public class SonarVulnerableExamplesTest {
 
   @Test
-  public void lookupUserByName_returnsEmailWhenFound() throws SQLException {
+  void lookupUserByName_returnsEmailWhenFound() throws SQLException {
     Connection connection = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
     ResultSet resultSet = mock(ResultSet.class);
@@ -39,7 +41,7 @@ public class SonarVulnerableExamplesTest {
   }
 
   @Test
-  public void lookupUserByName_returnsNullWhenNotFound() throws SQLException {
+  void lookupUserByName_returnsNullWhenNotFound() throws SQLException {
     Connection connection = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
     ResultSet resultSet = mock(ResultSet.class);
@@ -55,7 +57,7 @@ public class SonarVulnerableExamplesTest {
   }
 
   @Test
-  public void lookupUserId_returnsIdWhenFound() throws SQLException {
+  void lookupUserId_returnsIdWhenFound() throws SQLException {
     Connection connection = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
     ResultSet resultSet = mock(ResultSet.class);
@@ -71,7 +73,7 @@ public class SonarVulnerableExamplesTest {
   }
 
   @Test
-  public void lookupUserId_returnsNegativeOneWhenNotFound() throws SQLException {
+  void lookupUserId_returnsNegativeOneWhenNotFound() throws SQLException {
     Connection connection = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
     ResultSet resultSet = mock(ResultSet.class);
@@ -85,7 +87,7 @@ public class SonarVulnerableExamplesTest {
   }
 
   @Test
-  public void checkPassword_comparesWithEquals() {
+  void checkPassword_comparesWithEquals() {
     SonarVulnerableExamples examples = new SonarVulnerableExamples();
     assertTrue(examples.checkPassword("secret", "secret"));
     assertFalse(examples.checkPassword("wrong", "secret"));
@@ -93,30 +95,30 @@ public class SonarVulnerableExamplesTest {
   }
 
   @Test
-  public void hashToken_usesSha256() throws NoSuchAlgorithmException {
+  void hashToken_usesSha256() throws NoSuchAlgorithmException {
     SonarVulnerableExamples examples = new SonarVulnerableExamples();
     String hash = examples.hashToken("token");
     assertNotNull(hash);
-    assertTrue(hash.length() > 0);
+    assertFalse(hash.isEmpty());
   }
 
   @Test
-  public void buildLabel_concatenatesPrefixAndIndex() {
+  void buildLabel_concatenatesPrefixAndIndex() {
     SonarVulnerableExamples examples = new SonarVulnerableExamples();
     assertEquals("item0item1item2", examples.buildLabel("item", 3));
     assertEquals("", examples.buildLabel("x", 0));
   }
 
   @Test
-  public void pickLotteryNumber_returnsValueInRange() {
+  void pickLotteryNumber_returnsValueInRange() {
     SonarVulnerableExamples examples = new SonarVulnerableExamples();
     int value = examples.pickLotteryNumber();
     assertTrue(value >= 0 && value < 100);
   }
 
   @Test
-  public void logEvent_doesNotThrow() {
+  void logEvent_doesNotThrow() {
     SonarVulnerableExamples examples = new SonarVulnerableExamples();
-    examples.logEvent("test-event");
+    assertDoesNotThrow(() -> examples.logEvent("test-event"));
   }
 }
