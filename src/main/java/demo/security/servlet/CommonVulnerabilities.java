@@ -82,11 +82,6 @@ public class CommonVulnerabilities {
     LOGGER.log(Level.INFO, "User action: {0}", username);
   }
 
-  public void listDirectory(String directoryName) throws IOException {
-    ProcessBuilder processBuilder = new ProcessBuilder("ls", directoryName);
-    processBuilder.start();
-  }
-
   public boolean readUserFile(String filename) {
     Path resolved = USER_DATA_BASE.resolve(filename).normalize();
     if (!resolved.startsWith(USER_DATA_BASE)) {
