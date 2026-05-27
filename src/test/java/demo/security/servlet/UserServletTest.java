@@ -17,6 +17,7 @@ import java.sql.Statement;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +48,17 @@ public class UserServletTest {
         new UserServlet().doGet(request, response);
 
         assertTrue(body.toString().contains("<h2>User 1</h2>"));
+    }
+
+    @Test
+    public void doPost_returnsWhenSessionHeaderMissing() throws Exception {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        when(request.getHeader("Session-Auth")).thenReturn(null);
+
+        new UserServlet().doPost(request, response);
+
+        verify(response, never()).getWriter();
     }
 
     @Test

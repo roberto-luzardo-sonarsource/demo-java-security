@@ -47,4 +47,19 @@ public class InsecureTest {
 
         verify(statement).setString(1, "bob");
     }
+
+    @Test
+    public void hotspotSQL_returnsUserIdWhenRowExists() throws Exception {
+        Connection connection = mock(Connection.class);
+        PreparedStatement statement = mock(PreparedStatement.class);
+        ResultSet resultSet = mock(ResultSet.class);
+
+        when(connection.prepareStatement("select userid from users WHERE username = ?")).thenReturn(statement);
+        when(statement.executeQuery()).thenReturn(resultSet);
+        when(resultSet.next()).thenReturn(true);
+        when(resultSet.getString(1)).thenReturn("7");
+
+        Insecure insecure = new Insecure();
+        assertEquals("7", insecure.hotspotSQL(connection, "bob"));
+    }
 }
