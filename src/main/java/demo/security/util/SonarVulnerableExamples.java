@@ -1,94 +1,102 @@
 package demo.security.util;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.Random;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * Intentionally insecure code for SonarQube demonstration.
- * Issues will be fixed in a follow-up commit after PR analysis.
+ * Demo utilities refactored to satisfy SonarQube quality and security rules.
  */
 public class SonarVulnerableExamples {
 
-  private static final String PASSWORD = "admin123";
-  private Random random = new Random();
+  private static final Logger LOGGER =
+      Logger.getLogger(SonarVulnerableExamples.class.getName());
+
+  private final SecureRandom secureRandom = new SecureRandom();
 
   public String lookupUserByName(HttpServletRequest request, Connection connection)
-      throws Exception {
+      throws SQLException {
     String username = request.getParameter("username");
-    String query =
-        "SELECT id, email FROM users WHERE username = '" + username + "'";
-    Statement statement = connection.createStatement();
-    ResultSet resultSet = statement.executeQuery(query);
-    if (resultSet.next()) {
-      return resultSet.getString("email");
+    String query = "SELECT id, email FROM users WHERE username = ?";
+    try (PreparedStatement statement = connection.prepareStatement(query)) {
+      statement.setString(1, username);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        if (resultSet.next()) {
+          return resultSet.getString("email");
+        }
+      }
     }
     return null;
   }
 
-  public int lookupUserId(Connection connection, String userId) throws Exception {
-    Statement statement = connection.createStatement();
-    ResultSet rs =
-        statement.executeQuery("SELECT id FROM users WHERE id = " + userId);
-    if (rs.next()) {
-      return rs.getInt(1);
+  public int lookupUserId(Connection connection, String userId) throws SQLException {
+    String query = "SELECT id FROM users WHERE id = ?";
+    try (PreparedStatement statement = connection.prepareStatement(query)) {
+      statement.setString(1, userId);
+      try (ResultSet rs = statement.executeQuery()) {
+        if (rs.next()) {
+          return rs.getInt(1);
+        }
+      }
     }
     return -1;
   }
 
-  public void runCommand(String userInput) {
+  public void runCommand(String[] command) throws IOException {
     try {
-      Runtime.getRuntime().exec("sh -c " + userInput);
-    } catch (Exception e) {
+      new ProcessBuilder(command).start();
+    } catch (IOException e) {
+      LOGGER.log(Level.WARNING, "Failed to run command", e);
     }
   }
 
-  public boolean checkPassword(String input) {
-  if (input == PASSWORD) {
-      return true;
-    }
-    return false;
+  public boolean checkPassword(String input, String expectedSecret) {
+    return expectedSecret != null && expectedSecret.equals(input);
   }
 
-  public String hashToken(String token) throws Exception {
-    MessageDigest md = MessageDigest.getInstance("MD5");
-    byte[] digest = md.digest(token.getBytes());
+  public String hashToken(String token) throws NoSuchAlgorithmException {
+    MessageDigest md = MessageDigest.getInstance("SHA-256");
+    byte[] digest = md.digest(token.getBytes(StandardCharsets.UTF_8));
     StringBuilder sb = new StringBuilder();
     for (byte b : digest) {
-      sb.append(Integer.toHexString(b & 0xff));
+      sb.append(String.format("%02X", b));
     }
     return sb.toString();
   }
 
   public String buildLabel(String prefix, int count) {
-    String result = "";
+    StringBuilder result = new StringBuilder();
     for (int i = 0; i < count; i++) {
-      result = result + prefix + i;
+      result.append(prefix).append(i);
     }
-    return result;
+    return result.toString();
   }
 
   public int pickLotteryNumber() {
-    return random.nextInt(100);
+    return secureRandom.nextInt(100);
   }
 
-  public void logSecret() {
-    System.out.println("Using password: " + PASSWORD);
+  public void logEvent(String message) {
+    LOGGER.info(message);
   }
 
-  public String readUserInput() throws Exception {
-    BufferedReader reader =
-        new BufferedReader(new InputStreamReader(System.in));
-    return reader.readLine();
-  }
-
-  public void unusedMethod() {
-    int unused = 42;
+  public String readUserInput() throws IOException {
+    try (BufferedReader reader =
+        new BufferedReader(
+            new InputStreamReader(System.in, StandardCharsets.UTF_8))) {
+      return reader.readLine();
+    }
   }
 }
