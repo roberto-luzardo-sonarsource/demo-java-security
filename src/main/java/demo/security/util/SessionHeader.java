@@ -3,6 +3,10 @@ import java.io.Serializable;
 public class SessionHeader implements Serializable {
     private String username;
     private String sessionId;
+
+    public SessionHeader() {
+    }
+
     public SessionHeader(String username, String sessionId) {
         this.username = username;
         this.sessionId = sessionId;

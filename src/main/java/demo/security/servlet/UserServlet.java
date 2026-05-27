@@ -1,5 +1,6 @@
 package demo.security.servlet;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import demo.security.util.DBUtils;
 import demo.security.util.SessionHeader;
 import org.apache.commons.codec.binary.Base64;
@@ -7,9 +8,7 @@ import org.apache.commons.codec.binary.Base64;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.util.List;
 
@@ -38,8 +37,8 @@ public class UserServlet extends HttpServlet {
         if (sessionAuth != null) {
             try {
                 byte[] decoded = Base64.decodeBase64(sessionAuth);
-                ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(decoded));
-                return (SessionHeader) in.readObject();
+                ObjectMapper mapper = new ObjectMapper();
+                return mapper.readValue(decoded, SessionHeader.class);
             } catch (Exception e) {
                 return null;
             }
