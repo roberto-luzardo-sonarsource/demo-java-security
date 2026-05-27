@@ -1,6 +1,6 @@
 package demo.security.servlet;
 
-import demo.security.util.WebUtils;
+import org.owasp.encoder.Encode;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,7 +29,7 @@ public class HomeServlet extends HttpServlet {
         name = name.trim();
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
-        out.print("<h2>Hello " + WebUtils.escapeHtml(name) + "</h2>");
+        out.print("<h2>Hello " + Encode.forHtml(name) + "</h2>");
         out.close();
     }
 

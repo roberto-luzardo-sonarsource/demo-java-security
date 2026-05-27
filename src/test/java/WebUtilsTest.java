@@ -3,6 +3,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import javax.servlet.http.HttpServletRequest;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
@@ -22,6 +23,11 @@ public class WebUtilsTest {
         when(request.getRequestedSessionId()).thenReturn(null);
 
         // WebUtils.getSessionId(request);
+    }
+
+    @Test
+    public void escapeHtml_encodesSpecialCharacters() {
+        assertEquals("&lt;script&gt;", WebUtils.escapeHtml("<script>"));
     }
 
     @Test

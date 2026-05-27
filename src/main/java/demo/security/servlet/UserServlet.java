@@ -3,8 +3,8 @@ package demo.security.servlet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import demo.security.util.DBUtils;
 import demo.security.util.SessionHeader;
-import demo.security.util.WebUtils;
 import org.apache.commons.codec.binary.Base64;
+import org.owasp.encoder.Encode;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -26,7 +26,7 @@ public class UserServlet extends HttpServlet {
             response.setContentType("text/html");
             PrintWriter out = response.getWriter();
             users.forEach((result) -> {
-                        out.print("<h2>User " + WebUtils.escapeHtml(result) + "</h2>");
+                        out.print("<h2>User " + Encode.forHtml(result) + "</h2>");
             });
             out.close();
         } catch (Exception e) {
@@ -59,7 +59,7 @@ public class UserServlet extends HttpServlet {
             response.setContentType("text/html");
             PrintWriter out = response.getWriter();
             users.forEach((result) -> {
-                out.print("<h2>User " + WebUtils.escapeHtml(result) + "</h2>");
+                out.print("<h2>User " + Encode.forHtml(result) + "</h2>");
             });
             out.close();
         } catch (Exception e) {

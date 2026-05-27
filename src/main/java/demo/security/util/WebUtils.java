@@ -1,5 +1,7 @@
 package demo.security.util;
 
+import org.owasp.encoder.Encode;
+
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -15,21 +17,7 @@ public class WebUtils {
     }
 
     public static String escapeHtml(String input) {
-        if (input == null) {
-            return "";
-        }
-        StringBuilder escaped = new StringBuilder(input.length());
-        for (char c : input.toCharArray()) {
-            switch (c) {
-                case '&' -> escaped.append("&amp;");
-                case '<' -> escaped.append("&lt;");
-                case '>' -> escaped.append("&gt;");
-                case '"' -> escaped.append("&quot;");
-                case '\'' -> escaped.append("&#x27;");
-                default -> escaped.append(c);
-            }
-        }
-        return escaped.toString();
+        return Encode.forHtml(input);
     }
 
     public static void getSessionId(HttpServletRequest request){
