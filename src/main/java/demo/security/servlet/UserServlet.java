@@ -1,6 +1,5 @@
 package demo.security.servlet;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import demo.security.util.DBUtils;
 import demo.security.util.SessionHeader;
 import demo.security.util.WebUtils;
@@ -13,13 +12,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.List;
 
 @WebServlet("/users")
 public class UserServlet extends HttpServlet {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final String USERNAME_PATTERN = "^[\\w.@+-]{1,64}$";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -34,8 +34,12 @@ public class UserServlet extends HttpServlet {
         }
         try {
             byte[] decoded = Base64.decodeBase64(sessionAuth);
-            return OBJECT_MAPPER.readValue(decoded, SessionHeader.class);
-        } catch (Exception e) {
+            String username = new String(decoded, StandardCharsets.UTF_8);
+            if (!username.matches(USERNAME_PATTERN)) {
+                return null;
+            }
+            return new SessionHeader(username, null);
+        } catch (IllegalArgumentException e) {
             return null;
         }
     }
