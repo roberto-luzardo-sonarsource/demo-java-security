@@ -52,7 +52,9 @@ public class SonarIssueDemoTest {
 
   @Test
   public void logMessage_doesNotThrow() {
-    new SonarIssueDemo().logMessage("coverage");
+    SonarIssueDemo demo = new SonarIssueDemo();
+    demo.logMessage("coverage");
+    assertEquals("demo", SonarIssueDemo.getDemoConstant());
   }
 
   @Test
@@ -63,11 +65,14 @@ public class SonarIssueDemoTest {
     }
 
     new SonarIssueDemo().riskyOperation(tempFile.getAbsolutePath());
-    tempFile.delete();
+    assertTrue(tempFile.exists());
+    assertTrue(tempFile.delete());
   }
 
   @Test
   public void emptyCatch_handlesMissingFile() {
-    new SonarIssueDemo().emptyCatch("missing-file-" + System.nanoTime() + ".txt");
+    String missingPath = "missing-file-" + System.nanoTime() + ".txt";
+    new SonarIssueDemo().emptyCatch(missingPath);
+    assertFalse(new File(missingPath).exists());
   }
 }
