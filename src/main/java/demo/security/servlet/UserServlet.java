@@ -23,7 +23,7 @@ public class UserServlet extends HttpServlet {
             List<String> users = db.findUsers(user);
             response.setContentType("text/html");
             PrintWriter out = response.getWriter();
-            users.forEach((result) -> {
+            users.forEach(result -> {
                         out.print("<h2>User "+result+ "</h2>");
             });
             out.close();
@@ -49,20 +49,22 @@ public class UserServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        SessionHeader sessionHeader = getSessionHeader(request);
-        if (sessionHeader == null) return;
-        String user = sessionHeader.getUsername();
         try {
+            SessionHeader sessionHeader = getSessionHeader(request);
+            if (sessionHeader == null) return;
+            String user = sessionHeader.getUsername();
             DBUtils db = new DBUtils();
             List<String> users = db.findUsers(user);
             response.setContentType("text/html");
             PrintWriter out = response.getWriter();
-            users.forEach((result) -> {
-                out.print("<h2>User "+result+ "</h2>");
-            });
+            users.forEach(result -> out.print("<h2>User "+result+ "</h2>"));
             out.close();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            try {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            } catch (IOException ioe) {
+                // Unable to send error response
+            }
         }
     }
 }

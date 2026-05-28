@@ -22,9 +22,9 @@ public class HomeServlet extends HttpServlet {
                          HttpServletResponse response) throws ServletException, IOException {
         String name = request.getParameter("name").trim();
         response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        out.print("<h2>Hello "+name+ "</h2>");
-        out.close();
+        try (PrintWriter out = response.getWriter()) {
+            out.print("<h2>Hello "+name+ "</h2>");
+        }
     }
 
     protected void doPost(HttpServletRequest request,
