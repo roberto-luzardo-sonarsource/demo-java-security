@@ -7,10 +7,12 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.owasp.encoder.Encode;
 
 @WebServlet("/helloWorld")
 public class HomeServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final String H2_CLOSE = "</h2>";
 
     public HomeServlet() {
         super();
@@ -18,19 +20,37 @@ public class HomeServlet extends HttpServlet {
     }
 
 
+    @Override
     protected void doGet(HttpServletRequest request,
                          HttpServletResponse response) throws ServletException, IOException {
-        String name = request.getParameter("name").trim();
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        out.print("<h2>Hello "+name+ "</h2>");
-        out.close();
+        try {
+            String name = request.getParameter("name").trim();
+            response.setContentType("text/html");
+            PrintWriter out = response.getWriter();
+            out.print("<h2>Hello " + Encode.forHtml(name) + H2_CLOSE);
+            out.close();
+        } catch (RuntimeException | IOException e) {
+            try {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred");
+            } catch (IOException ioe) {
+                // Unable to send error response
+            }
+        }
     }
 
+    @Override
     protected void doPost(HttpServletRequest request,
                           HttpServletResponse response) throws ServletException, IOException {
         // TODO Auto-generated method stub
-        doGet(request, response);
+        try {
+            doGet(request, response);
+        } catch (ServletException | IOException e) {
+            try {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An internal error occurred.");
+            } catch (IOException ioe) {
+                // Unable to send error response
+            }
+        }
     }
 
 }
