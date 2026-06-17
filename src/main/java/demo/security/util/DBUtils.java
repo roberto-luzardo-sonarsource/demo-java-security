@@ -34,4 +34,14 @@ public class DBUtils {
         }
         return items;
     }
+    public List<String> findBugs(String bugId) throws Exception {
+        String query = "SELECT bug_id FROM bugs WHERE bug_id = '" + bugId + "'";
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(query);
+        List<String> bugs = new ArrayList<String>();
+        while (resultSet.next()){
+            bugs.add(resultSet.getString(0));
+        }
+        return bugs;
+}
 }
