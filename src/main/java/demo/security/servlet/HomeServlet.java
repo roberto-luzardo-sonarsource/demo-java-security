@@ -30,7 +30,15 @@ public class HomeServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request,
                           HttpServletResponse response) throws ServletException, IOException {
         // TODO Auto-generated method stub
-        doGet(request, response);
+        try {
+            doGet(request, response);
+        } catch (Exception e) {
+            try {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred");
+            } catch (IOException ioe) {
+                // Unable to send error response
+            }
+        }
     }
 
 }
