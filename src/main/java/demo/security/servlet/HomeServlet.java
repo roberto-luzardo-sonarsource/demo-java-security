@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet("/helloWorld")
 public class HomeServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final String HEADING_CLOSE_TAG = "</h2>";
 
     public HomeServlet() {
         super();
@@ -18,15 +19,37 @@ public class HomeServlet extends HttpServlet {
     }
 
 
+    @Override
     protected void doGet(HttpServletRequest request,
                          HttpServletResponse response) throws ServletException, IOException {
-        String name = request.getParameter("name").trim();
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        out.print("<h2>Hello "+name+ "</h2>");
-        out.close();
+        try {
+            String name = request.getParameter("name").trim();
+            String safeName = encodeHtml(name);
+            response.setContentType("text/html");
+            PrintWriter out = response.getWriter();
+            out.print("<h2>Hello " + safeName + HEADING_CLOSE_TAG);
+            out.close();
+        } catch (Exception e) {
+            try {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            } catch (IOException ioe) {
+                // Unable to send error response
+            }
+        }
     }
 
+    private static String encodeHtml(String input) {
+        if (input == null) {
+            return null;
+        }
+        return input.replace("&", "&amp;")
+                     .replace("<", "&lt;")
+                     .replace(">", "&gt;")
+                     .replace("\"", "&quot;")
+                     .replace("'", "&#x27;");
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request,
                           HttpServletResponse response) throws ServletException, IOException {
         // TODO Auto-generated method stub
