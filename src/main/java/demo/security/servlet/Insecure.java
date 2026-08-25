@@ -34,18 +34,19 @@ public class Insecure {
 
   public String taintedSQL(HttpServletRequest request, Connection connection) throws Exception {
     String user = request.getParameter("user");
-    String query = "SELECT userid FROM users WHERE username = '" + user  + "'";
-    Statement statement = connection.createStatement();
-    ResultSet resultSet = statement.executeQuery(query);
+    String query = "SELECT userid FROM users WHERE username = ?";
+    PreparedStatement statement = connection.prepareStatement(query);
+    statement.setString(1, user);
+    ResultSet resultSet = statement.executeQuery();
     return resultSet.getString(0);
   }
   
   public String hotspotSQL(Connection connection, String user) throws Exception {
-	  Statement statement = null;
-	  statement = connection.createStatement();
-	  ResultSet rs = statement.executeQuery("select userid from users WHERE username=" + user);
-	  return rs.getString(0);
-	}
+    Statement statement = null;
+    statement = connection.createStatement();
+    ResultSet rs = statement.executeQuery("select userid from users WHERE username=" + user);
+    return rs.getString(0);
+  }
 
   // --------------------------------------------------------------------------
   // Custom sources, sanitizer and sinks example
